@@ -20,17 +20,35 @@ import {
   Logout,
   AccountCircleOutlined,
 } from "@mui/icons-material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import api from '../api'; 
 
 export default function NavBarComponent() {
   const [notificationAnchorEl, setNotificationAnchorEl] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
-  // handleNotificationClicked
+  const [user, setUser] = useState(null); 
   const open = Boolean(anchorEl);
   const notificationOpen = Boolean(notificationAnchorEl);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await api.get('/auth/me');
+        setUser(response.data); 
+      } catch (error) {
+        console.error("Erro ao buscar os dados do usuário:", error);
+      }
+    };
+
+    fetchUser(); 
+  }, []);
+
   const handleAvatarClicked = (event) => {
     setAnchorEl(event.currentTarget);
   };
+
   const handleNotificationClicked = (event) => {
     setNotificationAnchorEl(event.currentTarget);
   };
@@ -38,15 +56,21 @@ export default function NavBarComponent() {
   const handleClose = () => {
     setAnchorEl(null);
   };
+
   const notificationHandleClose = () => {
     setNotificationAnchorEl(null);
+  };
+
+  const handleProfileClick = () => {
+    handleClose();
+    navigate('/user'); 
   };
 
   return (
     <Grid container>
       <Grid item md={12}>
         <Paper elevation={4}>
-          <AppBar sx={{ padding: 2 }} position="static">
+          <AppBar sx={{ padding: 2, bgcolor: '#00796b', position: 'fixed', top: 0 }} >
             <Container maxWidth="xxl">
               <Box
                 sx={{
@@ -55,27 +79,14 @@ export default function NavBarComponent() {
                   alignItems: "center",
                 }}
               >
-                <Typography
-                  variant="h6"
-                  component="a"
-                  href="/"
-                  sx={{
-                    mx: 2,
-                    display: { xs: "none", md: "flex" },
-                    fontWeight: 700,
-                    letterSpacing: ".2rem",
-                    color: "inherit",
-                    textDecoration: "none",
-                  }}
-                >
-                  ADIMS
+                <Typography fontFamily={"Inter"} variant="h6">
+                  Estoque
                 </Typography>
-
                 <Box
                   sx={{
                     display: "flex",
-                    justifyContent: "right",
                     alignItems: "center",
+                    ml: "auto",
                   }}
                 >
                   <IconButton color="inherit">
@@ -104,10 +115,10 @@ export default function NavBarComponent() {
                     aria-haspopup="true"
                   >
                     <Tooltip title="account settings">
-                      <Avatar sx={{ width: 32, height: 32 }}>Z</Avatar>
+                      <Avatar sx={{ width: 32, height: 32 }}>{user?.username?.charAt(0).toUpperCase()}</Avatar>
                     </Tooltip>
                   </IconButton>
-                  <Typography fontFamily={"Inter"}>ADMI ZAKARYAE</Typography>
+                  <Typography fontFamily={"Inter"}>{user?.email || "Carregando..."}</Typography>
                 </Box>
 
                 <Menu
@@ -116,11 +127,11 @@ export default function NavBarComponent() {
                   onClick={handleClose}
                   onClose={handleClose}
                 >
-                  <MenuItem>
+                  <MenuItem onClick={handleProfileClick}> 
                     <ListItemIcon>
                       <AccountCircleOutlined fontSize="small" />
                     </ListItemIcon>
-                    Profile
+                    Perfil
                   </MenuItem>
                   <Divider />
 
@@ -128,13 +139,7 @@ export default function NavBarComponent() {
                     <ListItemIcon>
                       <Settings fontSize="small" />
                     </ListItemIcon>
-                    Settings
-                  </MenuItem>
-                  <MenuItem>
-                    <ListItemIcon>
-                      <Logout fontSize="small" />
-                    </ListItemIcon>
-                    Logout
+                    Configurações
                   </MenuItem>
                 </Menu>
               </Box>
@@ -142,35 +147,7 @@ export default function NavBarComponent() {
           </AppBar>
         </Paper>
       </Grid>
+      <Box sx={{ paddingTop: '64px' }} />
     </Grid>
   );
-}
-
-{
-  /* <Grid item md={7}>
-                  <Paper
-                    component="form"
-                    sx={{
-                      p: "2px 4px",
-                      width: "50%",
-                      mx: "auto",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <InputBase
-                      sx={{ ml: 1, flex: 1 }}
-                      placeholder="Search "
-                      inputProps={{ "aria-label": "search" }}
-                    />
-                    <IconButton
-                      type="button"
-                      sx={{ p: "10px" }}
-                      aria-label="search"
-                    >
-                      <Search />
-                    </IconButton>
-                  </Paper>
-                </Grid> */
 }

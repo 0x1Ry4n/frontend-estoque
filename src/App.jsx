@@ -1,47 +1,41 @@
 import Inter from "../public/static/fonts/Inter.ttf";
-import { ThemeProvider, CssBaseline, createTheme, Box } from "@mui/material";
+import { ThemeProvider, CssBaseline, createTheme } from "@mui/material";
 import RootComponent from "./components/RootComponent";
-import RootPage from "./components/RootPage";
-import DataTable from "./test/DataTable";
-import Hello from "./test/Hello";
-// import "../app.css";
 import {
   Route,
   createBrowserRouter,
   createRoutesFromElements,
   RouterProvider,
+  Navigate,
 } from "react-router-dom";
-import Home from "./components/bodyComponents/home/Home";
-import Inventory from "./components/bodyComponents/inventory/Inventory";
-import Customer from "./components/bodyComponents/customer/Customer";
-import Revenue from "./components/bodyComponents/revenue/Revenue";
-import Growth from "./components/bodyComponents/growth/Growth";
-import Report from "./components/bodyComponents/report/Report";
-import Setting from "./components/bodyComponents/Settings/Setting";
-import Order from "./components/bodyComponents/order/Order";
-import OrderModal from "./components/bodyComponents/order/OrderModal";
+import Home from "./components/core/bodyComponents/home/Home";
+import Revenue from "./components/core/bodyComponents/revenue/Revenue";
+import Growth from "./components/core/bodyComponents/growth/Growth";
+import Report from "./components/core/bodyComponents/report/Report";
+import Setting from "./components/core/bodyComponents/settings/Setting";
+import Login from "./components/auth/login/Login";
+import PrivateRoute from './components/auth/privateRoute'; 
+import ProductManagement from "./components/core/bodyComponents/product/ProductManagement";
+import CategoryManagement from "./components/core/bodyComponents/category/CategoryManagement";
+import CustomerManagement from "./components/core/bodyComponents/customer/CustomerManagement";
+import SupplierManagement from "./components/core/bodyComponents/supplier/SupplierManagement";
+import InventoryManagement from "./components/core/bodyComponents/inventory/InventoryManagement";
+import OrderManagement from "./components/core/bodyComponents/order/OrderManagement";
+import QRCodeGenerator from "./components/core/bodyComponents/qrcode/QRCodeGenerator";
+import UserProfile from "./components/core/bodyComponents/user/UserProfile";
+import UserManagement from "./components/core/bodyComponents/user/UserManagement";
+import CalendarWithNotes from "./components/core/bodyComponents/calendar/CalendarWithNotes";
+import MapComponent from "./components/core/bodyComponents/maps/Maps";
+import 'leaflet/dist/leaflet.css';
+import ReceivementManagement from "./components/core/bodyComponents/receivement/ReceivementManagement";
+import ExitManagement from "./components/core/bodyComponents/exit/ExitManagement";
 
 function App() {
   const theme = createTheme({
     spacing: 4,
     palette: {
       mode: "light",
-
-      // primary: {
-      //   main: "#573BFE",
-      // },
-      // text: {
-      //   primary: "#202635",
-      //   secondary: "#A0AEC0",
-      // },
-      // secondary: {
-      //   main: "#01C0F6",
-      // },
-      // error: {
-      //   main: "#E03137",
-      // },
     },
-
     typography: {
       fontFamily: "Inter",
     },
@@ -59,20 +53,37 @@ function App() {
         `,
       },
     },
-    //here we customize our typographi and in the variant prop we can use out myVar value
   });
+
+  const isAuthenticated = () => {
+    return localStorage.getItem('token'); 
+  };
+
   const router = createBrowserRouter(
     createRoutesFromElements(
-      <Route path="/" element={<RootComponent />}>
-        <Route index element={<RootPage />} />
-        <Route path="/home" element={<Home />}></Route>
-        <Route path="/inventory" element={<Inventory />}></Route>
-        <Route path="/orders" element={<Order />}></Route>
-        <Route path="/customers" element={<Customer />}></Route>
-        <Route path="/revenue" element={<Revenue />}></Route>
-        <Route path="/growth" element={<Growth />}></Route>
-        <Route path="/reports" element={<Report />}></Route>
-        <Route path="/settings" element={<Setting />}></Route>
+      <Route>
+        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Navigate to={isAuthenticated() ? "/home" : "/login"} />} />
+        <Route path="/" element={<PrivateRoute><RootComponent /></PrivateRoute>}>
+          <Route path="/home" element={<Home />} />
+          <Route path="/calendar" element={<CalendarWithNotes />} />
+          <Route path="/maps" element={<MapComponent />} />
+          <Route path="/user" element={<UserProfile />} />
+          <Route path="/create-user" element={<UserManagement />} /> 
+          <Route path="/categories" element={<CategoryManagement />} />
+          <Route path="/suppliers" element={<SupplierManagement />} />
+          <Route path="/products" element={<ProductManagement />} />
+          <Route path="/inventory" element={<InventoryManagement />} />
+          <Route path="/receivements" element={<ReceivementManagement />} />
+          <Route path="/exits" element={<ExitManagement />} />
+          <Route path="/orders" element={<OrderManagement />} />
+          <Route path="/customers" element={<CustomerManagement />} />
+          <Route path="/revenue" element={<Revenue />} />
+          <Route path="/growth" element={<Growth />} />
+          <Route path="/reports" element={<Report />} />
+          <Route path="/settings" element={<Setting />} />
+          <Route path="/qrcode-generator" element={<QRCodeGenerator />} />
+        </Route>
       </Route>
     )
   );
