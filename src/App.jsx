@@ -1,47 +1,31 @@
+// src/App.js
 import Inter from "../public/static/fonts/Inter.ttf";
-import { ThemeProvider, CssBaseline, createTheme, Box } from "@mui/material";
+import { ThemeProvider, CssBaseline, createTheme } from "@mui/material";
 import RootComponent from "./components/RootComponent";
-import RootPage from "./components/RootPage";
-import DataTable from "./test/DataTable";
-import Hello from "./test/Hello";
-// import "../app.css";
 import {
   Route,
   createBrowserRouter,
   createRoutesFromElements,
   RouterProvider,
 } from "react-router-dom";
-import Home from "./components/bodyComponents/home/Home";
-import Inventory from "./components/bodyComponents/inventory/Inventory";
-import Customer from "./components/bodyComponents/customer/Customer";
-import Revenue from "./components/bodyComponents/revenue/Revenue";
-import Growth from "./components/bodyComponents/growth/Growth";
-import Report from "./components/bodyComponents/report/Report";
-import Setting from "./components/bodyComponents/Settings/Setting";
-import Order from "./components/bodyComponents/order/Order";
-import OrderModal from "./components/bodyComponents/order/OrderModal";
+import Home from "./components/core/bodyComponents/home/Home";
+import Inventory from "./components/core/bodyComponents/inventory/Inventory";
+import Customer from "./components/core/bodyComponents/customer/Customer";
+import Revenue from "./components/core/bodyComponents/revenue/Revenue";
+import Growth from "./components/core/bodyComponents/growth/Growth";
+import Report from "./components/core/bodyComponents/report/Report";
+import Setting from "./components/core/bodyComponents/settings/Setting";
+import Order from "./components/core/bodyComponents/order/Order";
+import Login from "./components/auth/login/Login";
+import PrivateRoute from './components/auth/privateRoute'; 
+import ProductManagement from "./components/core/bodyComponents/product/ProductManagement";
 
 function App() {
   const theme = createTheme({
     spacing: 4,
     palette: {
       mode: "light",
-
-      // primary: {
-      //   main: "#573BFE",
-      // },
-      // text: {
-      //   primary: "#202635",
-      //   secondary: "#A0AEC0",
-      // },
-      // secondary: {
-      //   main: "#01C0F6",
-      // },
-      // error: {
-      //   main: "#E03137",
-      // },
     },
-
     typography: {
       fontFamily: "Inter",
     },
@@ -59,20 +43,21 @@ function App() {
         `,
       },
     },
-    //here we customize our typographi and in the variant prop we can use out myVar value
   });
+
   const router = createBrowserRouter(
     createRoutesFromElements(
       <Route path="/" element={<RootComponent />}>
-        <Route index element={<RootPage />} />
-        <Route path="/home" element={<Home />}></Route>
-        <Route path="/inventory" element={<Inventory />}></Route>
-        <Route path="/orders" element={<Order />}></Route>
-        <Route path="/customers" element={<Customer />}></Route>
-        <Route path="/revenue" element={<Revenue />}></Route>
-        <Route path="/growth" element={<Growth />}></Route>
-        <Route path="/reports" element={<Report />}></Route>
-        <Route path="/settings" element={<Setting />}></Route>
+        <Route path="/login" element={<Login />} />
+        <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
+        <Route path="/products" element={<PrivateRoute><ProductManagement /></PrivateRoute>} />
+        <Route path="/inventory" element={<PrivateRoute><Inventory /></PrivateRoute>} />
+        <Route path="/orders" element={<PrivateRoute><Order /></PrivateRoute>} />
+        <Route path="/customers" element={<PrivateRoute><Customer /></PrivateRoute>} />
+        <Route path="/revenue" element={<PrivateRoute><Revenue /></PrivateRoute>} />
+        <Route path="/growth" element={<PrivateRoute><Growth /></PrivateRoute>} />
+        <Route path="/reports" element={<PrivateRoute><Report /></PrivateRoute>} />
+        <Route path="/settings" element={<PrivateRoute><Setting /></PrivateRoute>} />
       </Route>
     )
   );

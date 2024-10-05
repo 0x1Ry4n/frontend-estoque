@@ -25,12 +25,13 @@ import { useState } from "react";
 export default function NavBarComponent() {
   const [notificationAnchorEl, setNotificationAnchorEl] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
-  // handleNotificationClicked
   const open = Boolean(anchorEl);
   const notificationOpen = Boolean(notificationAnchorEl);
+  
   const handleAvatarClicked = (event) => {
     setAnchorEl(event.currentTarget);
   };
+  
   const handleNotificationClicked = (event) => {
     setNotificationAnchorEl(event.currentTarget);
   };
@@ -38,6 +39,7 @@ export default function NavBarComponent() {
   const handleClose = () => {
     setAnchorEl(null);
   };
+  
   const notificationHandleClose = () => {
     setNotificationAnchorEl(null);
   };
@@ -46,7 +48,7 @@ export default function NavBarComponent() {
     <Grid container>
       <Grid item md={12}>
         <Paper elevation={4}>
-          <AppBar sx={{ padding: 2 }} position="static">
+          <AppBar sx={{ padding: 2, bgcolor: '#00796b', position: 'fixed', top: 0 }} >
             <Container maxWidth="xxl">
               <Box
                 sx={{
@@ -55,27 +57,15 @@ export default function NavBarComponent() {
                   alignItems: "center",
                 }}
               >
-                <Typography
-                  variant="h6"
-                  component="a"
-                  href="/"
-                  sx={{
-                    mx: 2,
-                    display: { xs: "none", md: "flex" },
-                    fontWeight: 700,
-                    letterSpacing: ".2rem",
-                    color: "inherit",
-                    textDecoration: "none",
-                  }}
-                >
-                  ADIMS
+                <Typography fontFamily={"Inter"} variant="h6">
+                  App Title
                 </Typography>
-
+                {/* Mover a seção do usuário e notificações para a direita */}
                 <Box
                   sx={{
                     display: "flex",
-                    justifyContent: "right",
                     alignItems: "center",
+                    ml: "auto", // Adicionando margem à esquerda para empurrar para a direita
                   }}
                 >
                   <IconButton color="inherit">
@@ -142,35 +132,7 @@ export default function NavBarComponent() {
           </AppBar>
         </Paper>
       </Grid>
+      <Box sx={{ paddingTop: '64px' }} />
     </Grid>
   );
-}
-
-{
-  /* <Grid item md={7}>
-                  <Paper
-                    component="form"
-                    sx={{
-                      p: "2px 4px",
-                      width: "50%",
-                      mx: "auto",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <InputBase
-                      sx={{ ml: 1, flex: 1 }}
-                      placeholder="Search "
-                      inputProps={{ "aria-label": "search" }}
-                    />
-                    <IconButton
-                      type="button"
-                      sx={{ p: "10px" }}
-                      aria-label="search"
-                    >
-                      <Search />
-                    </IconButton>
-                  </Paper>
-                </Grid> */
 }

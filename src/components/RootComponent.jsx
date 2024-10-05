@@ -1,26 +1,26 @@
-import React from "react";
 import NavBarComponent from "./NavBarComponent";
 import { Box, Grid } from "@mui/material";
 import SideBarComponent from "./SideBarComponent";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 
 export default function RootComponent() {
+  const location = useLocation();
+
+  const noNavBarRoutes = ["/login", "/signup"]; 
+
+  const shouldDisplayNavBar = !noNavBarRoutes.includes(location.pathname);
+
   return (
     <>
-      <NavBarComponent />
-      <Box
-        sx={
-          {
-            // bgcolor: "#DEE3E9",
-            // height: 899,
-          }
-        }
-      >
+      {shouldDisplayNavBar && <NavBarComponent />}
+      <Box sx={{}}>
         <Grid container spacing={0}>
-          <Grid item md={2} sm={0}>
-            <SideBarComponent />
-          </Grid>
-          <Grid item md={10}>
+          {shouldDisplayNavBar && (
+            <Grid item md={2} sm={0}>
+              <SideBarComponent />
+            </Grid>
+          )}
+          <Grid item md={shouldDisplayNavBar ? 10 : 12}>
             <Outlet />
           </Grid>
         </Grid>

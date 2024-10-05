@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "../../public/styles/links.css";
 import {
   List,
@@ -8,9 +8,7 @@ import {
   ListItemButton,
   IconButton,
   Box,
-  Snackbar,
-  Alert,
-  Button,
+  Collapse,
 } from "@mui/material";
 import {
   HomeOutlined,
@@ -21,122 +19,107 @@ import {
   CardTravelOutlined,
   TrendingUpOutlined,
   PeopleAltOutlined,
+  CategoryOutlined,
+  ListAltOutlined,
+  OutboxOutlined,
+  ExpandMore,
+  ExpandLess,
 } from "@mui/icons-material";
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function SideBarComponent() {
   const navigate = useNavigate();
-  const navigateTo = (to) => {
-    navigate(to);
-  };
   const location = useLocation();
   const currentPage = location.pathname;
-  console.log(currentPage);
-  // const styles = theme => ({
-  //     listItemText:{
-  //         fontSize:'0.7em',//Insert your required size
-  //     }
-  //     });
+
   const sideBarComponent = [
-    {
-      title: "Home",
-      component: <HomeOutlined fontSize="medium" color="primary" />,
-    },
-    {
-      title: "Inventory",
-      component: <Inventory2Outlined fontSize="medium" color="primary" />,
-    },
-    {
-      title: "Orders",
-      component: <CardTravelOutlined fontSize="medium" color="primary" />,
-    },
-    {
-      title: "Customers",
-      component: <PeopleAltOutlined fontSize="medium" color="primary" />,
-    },
-    {
-      title: "Revenue",
-      component: <MonetizationOnOutlined fontSize="medium" color="primary" />,
-    },
-    {
-      title: "Growth",
-      component: <TrendingUpOutlined fontSize="medium" color="primary" />,
-    },
-    {
-      title: "Reports",
-      component: <DescriptionOutlined fontSize="medium" color="primary" />,
-    },
-    {
-      title: "Settings",
-      component: <SettingsOutlined fontSize="medium" color="primary" />,
-    },
+    { title: "Home", route: "home", component: <HomeOutlined /> },
+    { title: "Fornecedores", route: "suppliers", component: <OutboxOutlined /> },
+    { title: "Categorias", route: "category", component: <CategoryOutlined /> },
+    { title: "Clientes", route: "customers", component: <PeopleAltOutlined /> },
+    { title: "Produtos", route: "products", component: <ListAltOutlined /> },
+    { title: "Inventário", route: "inventory", component: <Inventory2Outlined /> },
+    { title: "Saídas", route: "orders", component: <CardTravelOutlined /> },
+    { title: "Receita", route: "revenue", component: <MonetizationOnOutlined /> },
+    { title: "Crescimento", route: "growth", component: <TrendingUpOutlined /> },
+    { title: "Relatórios", route: "reports", component: <DescriptionOutlined /> },
+    { title: "Configurações", route: "settings", component: <SettingsOutlined /> },
   ];
+
   const [selected, setSelected] = useState(0);
-  const handlSelectedComponent = (event, index) => {
+  const [open, setOpen] = useState(true);
+
+  const handleSelectedComponent = (index) => {
     setSelected(index);
   };
+
+  const toggleSidebar = () => {
+    setOpen(!open);
+  };
+
   return (
-    <>
-      <List>
-        {sideBarComponent.map((comp, index) => (
-          <ListItem disablePadding dense={true} key={index}>
-            <Box width="100%">
-              <ListItemButton
-                onClick={(event) => {
-                  handlSelectedComponent(event, index);
-                  navigateTo(comp.title.toLocaleLowerCase());
-                }}
-                // selected={}
-                selected={
-                  index === selected &&
-                  currentPage === "/" + comp.title.toLowerCase()
-                }
-                sx={{
-                  mb: 3,
-                  borderLeft: 0,
-                  borderColor: "primary.main",
-                  ml: 1,
-                }}
-              >
-                <ListItemIcon>
-                  <IconButton>{comp.component}</IconButton>
-                </ListItemIcon>
-                {/* <Link
-                  to={"" + comp.title.toLocaleLowerCase()}
-                  className="router-link"
-                > */}
-                <ListItemText
-                  primary={comp.title}
-                  primaryTypographyProps={{
-                    fontSize: "medium",
-                    fontWeight: selected === index ? "bold" : "",
-                    color: selected === index ? "primary.main" : "inherit",
+    <Box
+      sx={{
+        position: "fixed",
+        left: 0,
+        top: 0,
+        bgcolor: "#ffffff",
+        height: "100vh",
+        boxShadow: 2,
+        p: 2,
+        zIndex: 1000,
+        transition: "width 0.3s",
+        width: open ? "250px" : "60px",
+      }}
+    >
+      <IconButton onClick={toggleSidebar} sx={{ mt: 15 }}>
+        {open ? <ExpandLess /> : <ExpandMore />}
+      </IconButton>
+      
+      <Collapse in={open}>
+        <List>
+          {sideBarComponent.map((comp, index) => (
+            <ListItem disablePadding key={index}>
+              <Box width="100%">
+                <ListItemButton
+                  onClick={() => {
+                    handleSelectedComponent(index);
+                    navigate(comp.route.toLowerCase());
                   }}
-                />
-                {/* </Link> */}
-              </ListItemButton>
-            </Box>
-          </ListItem>
-        ))}
-      </List>
-      {/* <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
-        <Alert onClose={handleClose} severity="success" sx={{ width: '100%' }}>
-          This is a success message!
-        </Alert>
-      </Snackbar> */}
-    </>
+                  selected={index === selected && currentPage === "/" + comp.route.toLowerCase()}
+                  sx={{
+                    mb: 2,
+                    bgcolor: selected === index ? "#e0f2f1" : "transparent",
+                    borderRadius: 2,
+                    transition: "background-color 0.2s",
+                    '&:hover': {
+                      bgcolor: "#b2dfdb",
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{
+                    color: selected === index ? "#00796b" : "inherit",
+                  }}>
+                    <IconButton>
+                      {comp.component}
+                    </IconButton>
+                  </ListItemIcon>
+                  {open && (
+                    <ListItemText
+                      primary={comp.title}
+                      primaryTypographyProps={{
+                        fontSize: "medium",
+                        fontWeight: selected === index ? "bold" : "normal",
+                        color: selected === index ? "#00796b" : "inherit",
+                      }}
+                    />
+                  )}
+                </ListItemButton>
+              </Box>
+            </ListItem>
+          ))}
+        </List>
+      </Collapse>
+    </Box>
   );
-  //   const [open, setOpen] = React.useState(false);
-
-  //   const handleClick = () => {
-  //     setOpen(true);
-  //   };
-
-  //   const handleClose = (event, reason) => {
-  //     if (reason === 'clickaway') {
-  //       return;
-  //     }
-
-  //     setOpen(false);
-  //   };
 }
