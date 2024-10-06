@@ -9,19 +9,33 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-export default function TopSellingProduct() {
-  const products = [
-    { name: "ASOS Ridey", price: 25.05, quantity: 73, amount: 1.828 },
-    {
-      name: "Philip Morris International",
-      price: 85.05,
-      quantity: 84,
-      amount: 7.144,
-    },
-    { name: "Donna Karan", price: 96.05, quantity: 94, amount: 9.028 },
-    { name: "Marco Pollo", price: 31.09, quantity: 51, amount: 1.585 },
-    { name: "Dolce Gabbana", price: 27.09, quantity: 78, amount: 2.113 },
-  ];
+
+export default function TopSellingProducts({ orders }) {
+  const productSales = {};
+
+  orders.forEach(order => {
+    const productId = order.inventory?.productId;
+    const productName = order.inventory?.productName; // Usando optional chaining
+    const price = order.inventory?.unitPrice; // Usando optional chaining
+    const totalPrice = order.totalPrice;
+
+    if (productId && productName && price !== undefined) { // Verificando se as propriedades estão definidas
+      if (productSales[productId]) {
+        productSales[productId].quantity += order.quantity;
+        productSales[productId].amount += totalPrice;
+      } else {
+        productSales[productId] = {
+          name: productName,
+          price: price,
+          quantity: order.quantity,
+          amount: totalPrice,
+        };
+      }
+    }
+  });
+
+  const topProducts = Object.values(productSales);
+
   return (
     <Box
       sx={{
@@ -33,7 +47,7 @@ export default function TopSellingProduct() {
       }}
     >
       <Typography variant="h6" fontWeight={"bold"} sx={{ mx: 3 }}>
-        Top selling products
+        Top Selling Products
       </Typography>
       <TableContainer>
         <Table>
@@ -46,16 +60,14 @@ export default function TopSellingProduct() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {products.map((product, id) => {
-              return (
-                <TableRow key={id}>
-                  <TableCell>{product.name}</TableCell>
-                  <TableCell>{product.price}</TableCell>
-                  <TableCell>{product.quantity}</TableCell>
-                  <TableCell>{product.amount}</TableCell>
-                </TableRow>
-              );
-            })}
+            {topProducts.map((product, id) => (
+              <TableRow key={id}>
+                <TableCell>{product.name}</TableCell>
+                <TableCell>${product.price ? product.price.toFixed(2) : 'N/A'}</TableCell> 
+                <TableCell>{product.quantity}</TableCell>
+                <TableCell>${product.amount ? product.amount.toFixed(2) : 'N/A'}</TableCell> 
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </TableContainer>

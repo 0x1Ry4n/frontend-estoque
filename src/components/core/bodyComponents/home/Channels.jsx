@@ -1,51 +1,36 @@
 import React, { useEffect, useState } from "react";
 import ApexCharts from "react-apexcharts";
 import { Box } from "@mui/material";
-export default function Channels() {
-  //   const total = data.reduce((sum, value) => sum + value, 0);
-  // const percentages = data.map(value => ((value / total) * 100).toFixed(2) + '%');
+
+export default function Channels({ orders }) {
   const [channelData, setChannelData] = useState([]);
+
   useEffect(() => {
-    setChannelData([
-      {
-        name: "Online Store",
-        data: [14, 25, 21, 17, 12, 13, 11],
-      },
-      {
-        name: "Amazon Marketplace",
-        data: [13, 23, 20, 8, 13, 27, 33],
-      },
-      {
-        name: "eBay Marketplace",
-        data: [11, 17, 15, 15, 21, 14, 15],
-      },
-      {
-        name: "Physical Store",
-        data: [50, 27, 13, 19, 16, 10, 5],
-      },
-      {
-        name: "Distributors",
-        data: [33, 4, 25, 20, 24, 11, 44],
-      },
-    ]);
-
-    return () => {
-      setChannelData([]);
+    const channels = {
+      "Online Store": [],
+      "Amazon Marketplace": [],
+      "eBay Marketplace": [],
+      "Physical Store": [],
+      "Distributors": [],
     };
-  }, []);
 
-  let totalArray = [];
-  const total = channelData.forEach((value) => {
-    const data = value.data;
-    if (totalArray.length === 0) totalArray = [...data];
-    else {
-      data.forEach((val, index) => (totalArray[index] += val));
-    }
-  });
+    orders.forEach(order => {
+      const totalPrice = order.totalPrice;
 
-  const options3 = {
+      channels["Online Store"].push(totalPrice);
+    });
+
+    const seriesData = Object.entries(channels).map(([name, data]) => ({
+      name,
+      data: data.length > 0 ? data : [0, 0, 0, 0, 0, 0, 0],
+    }));
+
+    setChannelData(seriesData);
+  }, [orders]);
+
+  const options = {
     chart: {
-      id: "basic-bar",
+      id: "sales-by-channel",
       type: "bar",
       stacked: true,
     },
@@ -58,7 +43,7 @@ export default function Channels() {
       offsetY: 0,
     },
     title: {
-      text: "Channels",
+      text: "Sales By Channel",
     },
     plotOptions: {
       bar: {
@@ -70,9 +55,10 @@ export default function Channels() {
       opacity: 1,
     },
     xaxis: {
-      categories: ["Mon", "Thu", "Wed", "The", "Fri", "Sat", "Sun"],
+      categories: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], 
     },
   };
+
   return (
     <Box
       sx={{
@@ -84,7 +70,7 @@ export default function Channels() {
       }}
     >
       <ApexCharts
-        options={options3}
+        options={options}
         series={channelData}
         type="bar"
         width="100%"

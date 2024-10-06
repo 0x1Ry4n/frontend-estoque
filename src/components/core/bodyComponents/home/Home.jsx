@@ -7,43 +7,88 @@ import UilTruck from "@iconscout/react-unicons/icons/uil-truck";
 import UilCheckCircle from "@iconscout/react-unicons/icons/uil-check-circle";
 import InfoCard from "../../subComponents/InfoCard";
 import TotalSales from "./TotalSales";
-import SalesByCity from "./SalesByCity";
 import Channels from "./Channels";
 import TopSellingProduct from "./TopSellingProduct";
+import api from "../../../../api";
+import SalesByProduct from "./SalesByProduct";
+
 export default class Home extends Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      orders: [],
+      pendingCount: 0,
+      inProgressCount: 0,
+      deliveredCount: 0,
+      pickedCount: 0,
+      invoiceCount: 0,
+    };
+  }
+
+  componentDidMount() {
+    this.fetchAllOrders();
+  }
+
+  fetchAllOrders = async () => {
+    try {
+      const response = await api.get('/orders/details');
+      const orders = response.data.content;
+
+      const pendingCount = orders.filter(order => order.orderStatus === 'PENDING').length;
+      const inProgressCount = orders.filter(order => order.orderStatus === 'IN_PROGRESS').length;
+      const deliveredCount = orders.filter(order => order.orderStatus === 'DELIVERED').length;
+      const pickedCount = orders.filter(order => order.orderStatus === 'PICKED').length;
+      const invoiceCount = orders.filter(order => order.orderStatus === 'INVOICE').length;
+
+      this.setState({ 
+        orders,
+        pendingCount,
+        inProgressCount,
+        deliveredCount,
+        pickedCount,
+        invoiceCount,
+      });
+    } catch (error) {
+      console.error("Erro ao buscar pedidos:", error);
+    }
   }
 
   render() {
-    const data = {};
+    const { pendingCount, inProgressCount, deliveredCount, pickedCount, invoiceCount } = this.state;
+
     const cardComponent = [
       {
         icon: <UilBox size={60} color={"#F6F4EB"} />,
-        title: "Picked",
-        subTitle: "1256",
+        title: "Pending",
+        subTitle: pendingCount,
         mx: 3,
         my: 0,
       },
       {
         icon: <UilTruck size={60} color={"#F6F4EB"} />,
-        title: "Shipped",
-        subTitle: "12",
+        title: "In Progress",
+        subTitle: inProgressCount,
         mx: 5,
         my: 0,
       },
       {
         icon: <UilCheckCircle size={60} color={"#F6F4EB"} />,
         title: "Delivered",
-        subTitle: "15",
+        subTitle: deliveredCount,
         mx: 5,
         my: 0,
       },
       {
         icon: <UilReceipt size={60} color={"#F6F4EB"} />,
+        title: "Picked",
+        subTitle: pickedCount,
+        mx: 3,
+        my: 0,
+      },
+      {
+        icon: <UilReceipt size={60} color={"#F6F4EB"} />,
         title: "Invoice",
-        subTitle: "07",
+        subTitle: invoiceCount,
         mx: 3,
         my: 0,
       },
@@ -53,8 +98,6 @@ export default class Home extends Component {
       <Box
         sx={{
           margin: 0,
-          // bgcolor: "grey",
-          // borderRadius: 5,
           padding: 3,
         }}
       >
@@ -69,7 +112,7 @@ export default class Home extends Component {
           }}
         >
           {cardComponent.map((card, index) => (
-            <Grid item md={3} key={index}>
+            <Grid item md={2} key={index}>
               <InfoCard card={card} />
             </Grid>
           ))}
@@ -77,19 +120,19 @@ export default class Home extends Component {
 
         <Grid container sx={{ marginX: 3 }}>
           <Grid item md={8}>
-            <TotalSales data={data} />
+            <TotalSales orders={this.state.orders} />
           </Grid>
           <Grid item md={4}>
-            <SalesByCity data={data} />
+            <SalesByProduct orders={this.state.orders} />
           </Grid>
         </Grid>
 
         <Grid container sx={{ margin: 3 }}>
           <Grid item md={6}>
-            <Channels />
+            <Channels orders={this.state.orders} />
           </Grid>
           <Grid item md={6}>
-            <TopSellingProduct />
+            <TopSellingProduct orders={this.state.orders} />
           </Grid>
         </Grid>
       </Box>

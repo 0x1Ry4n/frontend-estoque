@@ -2,10 +2,20 @@ import { Box } from "@mui/material";
 import React from "react";
 import ApexCharts from "react-apexcharts";
 
-export default function TotalSales() {
+export default function TotalSales({ orders }) {
+  // Contar a quantidade de vendas por data
+  const salesData = orders.reduce((acc, order) => {
+    const date = new Date(order.orderDate).toLocaleDateString();
+    acc[date] = (acc[date] || 0) + 1; // Incrementa o contador para a data correspondente
+    return acc;
+  }, {});
+
+  const dates = Object.keys(salesData); // Extrai as datas
+  const quantities = Object.values(salesData); // Extrai as quantidades
+
   const options = {
     title: {
-      text: "Totale Sales",
+      text: "Total Sales",
       align: "left",
       style: {
         fontSize: "16px",
@@ -25,10 +35,6 @@ export default function TotalSales() {
       width: 3,
     },
     legend: {
-      customLegendItems: [
-        "current Week  <b>$31,000<b/>",
-        "Previous Week <b>$37,000<b/>",
-      ],
       position: "top",
       horizontalAlign: "center",
       fontSize: "14px",
@@ -60,20 +66,17 @@ export default function TotalSales() {
       },
     },
     xaxis: {
-      categories: ["Mon", "Thu", "Wed", "The", "Fri", "Sat", "Sun"],
+      categories: dates, // Usando as datas
     },
   };
+
   const series = [
     {
-      type: "line", //here we can define multiple type of chart in the same box
-      name: "series-1",
-      data: [2000, 3200, 3250, 4700, 3900, 4900, 3200],
-    },
-    {
-      name: "series-2",
-      data: [1500, 1900, 1800, 2900, 2600, 3200, 2200],
+      name: "Number of Sales",
+      data: quantities, // Usando as quantidades contadas
     },
   ];
+
   return (
     <Box
       sx={{
