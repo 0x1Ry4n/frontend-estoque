@@ -6,42 +6,41 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [refreshToken, setRefreshToken] = useState(localStorage.getItem('refreshToken'));
 
   useEffect(() => {
-    const refreshTokenIfNeeded = async () => {
+    const checkTokenExpiration = () => {
       if (isTokenExpired(token)) {
-        try {
-          const response = await api.post('/auth/refresh-token', { token: refreshToken });
-          const newToken = response.data.token;
-          setToken(newToken);
-          localStorage.setItem('token', newToken);
-          setAuthToken(newToken);
-        } catch (error) {
-          console.error("Erro ao atualizar o token: ", error);
-        }
+        logout();
       }
     };
 
-    refreshTokenIfNeeded();
+    checkTokenExpiration();
 
-    const interval = setInterval(refreshTokenIfNeeded, 60000); 
+    const interval = setInterval(checkTokenExpiration, 60000); 
     return () => clearInterval(interval);
-  }, [refreshToken, token]);
+  }, [token]);
 
   const login = async (email, password) => {
-    const response = await api.post('/auth/login', { email, password });
-    const { token, refreshToken } = response.data;
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      const { token } = response.data;
 
-    setToken(token);
-    setRefreshToken(refreshToken);
-    localStorage.setItem('token', token);
-    setAuthToken(token);
-    localStorage.setItem('refreshToken', refreshToken);
+      setToken(token);
+      localStorage.setItem('token', token);
+      setAuthToken(token);
+    } catch (error) {
+      console.error("Erro ao fazer login: ", error);
+    }
+  };
+
+  const logout = () => {
+    setToken(null);
+    localStorage.removeItem('token');
+    setAuthToken(null);
   };
 
   return (
-    <AuthContext.Provider value={{ token, login }}>
+    <AuthContext.Provider value={{ token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

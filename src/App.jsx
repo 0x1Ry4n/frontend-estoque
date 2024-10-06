@@ -1,4 +1,3 @@
-// src/App.js
 import Inter from "../public/static/fonts/Inter.ttf";
 import { ThemeProvider, CssBaseline, createTheme } from "@mui/material";
 import RootComponent from "./components/RootComponent";
@@ -9,16 +8,18 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import Home from "./components/core/bodyComponents/home/Home";
-import Inventory from "./components/core/bodyComponents/inventory/Inventory";
-import Customer from "./components/core/bodyComponents/customer/Customer";
 import Revenue from "./components/core/bodyComponents/revenue/Revenue";
 import Growth from "./components/core/bodyComponents/growth/Growth";
 import Report from "./components/core/bodyComponents/report/Report";
 import Setting from "./components/core/bodyComponents/settings/Setting";
-import Order from "./components/core/bodyComponents/order/Order";
 import Login from "./components/auth/login/Login";
 import PrivateRoute from './components/auth/privateRoute'; 
 import ProductManagement from "./components/core/bodyComponents/product/ProductManagement";
+import CategoryManagement from "./components/core/bodyComponents/category/CategoryManagement";
+import CustomerManagement from "./components/core/bodyComponents/customer/CustomerManagement";
+import SupplierManagement from "./components/core/bodyComponents/supplier/SupplierManagement";
+import InventoryManagement from "./components/core/bodyComponents/inventory/InventoryManagement";
+import OrderManagement from "./components/core/bodyComponents/order/OrderManagement";
 
 function App() {
   const theme = createTheme({
@@ -50,10 +51,12 @@ function App() {
       <Route path="/" element={<RootComponent />}>
         <Route path="/login" element={<Login />} />
         <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
+        <Route path="/categories" element={<PrivateRoute><CategoryManagement /></PrivateRoute>} />
+        <Route path="/suppliers" element={<PrivateRoute><SupplierManagement /></PrivateRoute>} />
         <Route path="/products" element={<PrivateRoute><ProductManagement /></PrivateRoute>} />
-        <Route path="/inventory" element={<PrivateRoute><Inventory /></PrivateRoute>} />
-        <Route path="/orders" element={<PrivateRoute><Order /></PrivateRoute>} />
-        <Route path="/customers" element={<PrivateRoute><Customer /></PrivateRoute>} />
+        <Route path="/inventory" element={<PrivateRoute><InventoryManagement /></PrivateRoute>} />
+        <Route path="/orders" element={<PrivateRoute><OrderManagement /></PrivateRoute>} />
+        <Route path="/customers" element={<PrivateRoute><CustomerManagement /></PrivateRoute>} />
         <Route path="/revenue" element={<PrivateRoute><Revenue /></PrivateRoute>} />
         <Route path="/growth" element={<PrivateRoute><Growth /></PrivateRoute>} />
         <Route path="/reports" element={<PrivateRoute><Report /></PrivateRoute>} />

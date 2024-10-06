@@ -35,8 +35,8 @@ export default function SideBarComponent() {
   const sideBarComponent = [
     { title: "Home", route: "home", component: <HomeOutlined /> },
     { title: "Fornecedores", route: "suppliers", component: <OutboxOutlined /> },
-    { title: "Categorias", route: "category", component: <CategoryOutlined /> },
     { title: "Clientes", route: "customers", component: <PeopleAltOutlined /> },
+    { title: "Categorias", route: "categories", component: <CategoryOutlined /> },
     { title: "Produtos", route: "products", component: <ListAltOutlined /> },
     { title: "Inventário", route: "inventory", component: <Inventory2Outlined /> },
     { title: "Saídas", route: "orders", component: <CardTravelOutlined /> },

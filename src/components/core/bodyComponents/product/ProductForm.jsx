@@ -68,10 +68,8 @@ const ProductForm = ({ onProductAdded }) => {
       if (response.status === 201) {
         alert('Produto cadastrado com sucesso!');
 
-        // Chame a função onProductAdded passando o novo produto
         onProductAdded(response.data.content);
 
-        // Limpar os campos
         setName('');
         setDescription('');
         setUnitPrice('');
@@ -101,7 +99,7 @@ const ProductForm = ({ onProductAdded }) => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                sx={{ mb: 2 }} // Espaçamento abaixo
+                sx={{ mb: 2 }} 
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -165,7 +163,8 @@ const ProductForm = ({ onProductAdded }) => {
                   onChange={(e) => setCategoryId(e.target.value)}
                   required
                 >
-                  {categories.map((category) => (
+                  {
+                  categories.map((category) => (
                     <MenuItem key={category.id} value={category.id}>
                       <CategoryIcon sx={{ mr: 1 }} />
                       {category.name}
@@ -203,7 +202,7 @@ const ProductForm = ({ onProductAdded }) => {
                 InputLabelProps={{
                   shrink: true,
                 }}
-                sx={{ mb: 2 }} // Espaçamento abaixo
+                sx={{ mb: 2 }} 
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">

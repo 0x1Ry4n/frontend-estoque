@@ -9,62 +9,65 @@ import {
 } from "@mui/material";
 import React from "react";
 
-export default function Overview() {
+const InventoryOverview = ({ totalProducts, todaySales, yesterdaySales, totalSales, reservedProducts, stockIssues }) => {
   return (
-    <Box>
+    <Box sx={{ mb: 4, backgroundColor: '#f5f5f5', borderRadius: 2, padding: 2, mt: 14 }}>
+      <Typography variant="h5" sx={{ ml: 3, mt: 2, fontWeight: 'bold' }}>
+        Resumo do Inventário
+      </Typography>
       <TableContainer>
         <Table>
           <TableBody>
             <TableRow>
-              <TableCell>Total Product</TableCell>
+              <TableCell>Total de Produtos</TableCell>
               <TableCell align="right">
                 <Typography variant="subtitle1" fontWeight="bold">
-                  15226
+                  {totalProducts}
                 </Typography>
               </TableCell>
             </TableRow>
 
             <TableRow>
-              <TableCell>Today sell</TableCell>
+              <TableCell>Vendas Hoje</TableCell>
               <TableCell align="right">
                 <Typography variant="subtitle1" fontWeight="bold">
-                  5241
+                  {todaySales}
                 </Typography>
               </TableCell>
             </TableRow>
 
             <TableRow>
-              <TableCell>Yesterday sell</TableCell>
+              <TableCell>Vendas Ontem</TableCell>
               <TableCell align="right">
                 <Typography variant="subtitle1" fontWeight="bold">
-                  3652
+                  {yesterdaySales}
                 </Typography>
               </TableCell>
             </TableRow>
 
             <TableRow>
-              <TableCell>Total sell</TableCell>
+              <TableCell>Total de Vendas</TableCell>
               <TableCell align="right">
                 <Typography variant="subtitle1" fontWeight="bold">
-                  11425
+                  {totalSales}
                 </Typography>
               </TableCell>
             </TableRow>
 
             <TableRow>
-              <TableCell>Product Reserved</TableCell>
+              <TableCell>Produtos Reservados</TableCell>
               <TableCell align="right">
                 <Typography variant="subtitle1" fontWeight="bold">
-                  6547
+                  {reservedProducts}
                 </Typography>
               </TableCell>
             </TableRow>
 
             <TableRow>
-              <TableCell>Stock Issues</TableCell>
+              <TableCell>Problemas de Estoque</TableCell>
               <TableCell align="right">
                 <Typography variant="subtitle1" fontWeight="bold">
-                  9562
+                  {stockIssues}
                 </Typography>
               </TableCell>
             </TableRow>
@@ -73,4 +76,6 @@ export default function Overview() {
       </TableContainer>
     </Box>
   );
-}
+};
+
+export default InventoryOverview;
