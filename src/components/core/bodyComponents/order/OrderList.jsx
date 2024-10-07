@@ -17,7 +17,7 @@ const Orders = () => {
   const [loading, setLoading] = useState(false);  
 
   useEffect(() => {
-    fetchOrders(); // Carregar pedidos ao montar o componente
+    fetchOrders(); 
   }, []);
 
   const fetchOrders = async () => {
@@ -25,12 +25,17 @@ const Orders = () => {
     try {
       const response = await api.get('/orders/details');
 
-      const ordersWithId = response.data.content.map(order => ({
-        id: order.orderId, 
-        ...order 
-      }));
-      setRows(ordersWithId); 
+      if (response.status === 200) {
+        const ordersWithId = response.data.content.map(order => ({
+          id: order.orderId, 
+          ...order 
+        }));
+        setRows(ordersWithId); 
+      } 
     } catch (error) {
+
+      if (response.status === 404) return;
+
       setSnackbarMessage("Erro ao carregar pedidos.");
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
@@ -80,7 +85,6 @@ const Orders = () => {
   const handleSave = async () => {
     const { fullName, totalPrice, orderDate, paymentMethod, orderStatus } = selectedOrder;
     
-    // Validação antes de salvar
     if (!fullName || !totalPrice || !orderDate || !paymentMethod || !orderStatus) {
       setSnackbarMessage("Por favor, preencha todos os campos obrigatórios.");
       setSnackbarSeverity("error");

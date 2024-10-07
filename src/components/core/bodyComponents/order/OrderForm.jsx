@@ -138,7 +138,8 @@ const OrderForm = ({ onOrderAdded }) => {
     <Box>
       <Paper elevation={4} sx={{ padding: 4, borderRadius: 2, backgroundColor: '#f5f5f5' }}>
         <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-          <AddCircleOutline sx={{ mr: 1 }} /> Cadastrar Pedido
+          <AddCircleOutline sx={{ mr: 1 }} /> 
+          Cadastrar Pedido
         </Typography>
         <Box component="form" onSubmit={handleSubmit}>
           {loading && <CircularProgress />}
@@ -245,7 +246,6 @@ const OrderForm = ({ onOrderAdded }) => {
           open={!!errorMessage || !!successMessage}
           autoHideDuration={6000}
           onClose={handleSnackbarClose}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         >
           <Alert onClose={handleSnackbarClose} severity={errorMessage ? 'error' : 'success'} sx={{ width: '100%' }}>
             {errorMessage || successMessage}

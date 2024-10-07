@@ -9,37 +9,34 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-import { AddCircleOutline, CategoryOutlined, ClassOutlined } from '@mui/icons-material';
+import { AddCircleOutline, CategoryOutlined } from '@mui/icons-material';
 import api from './../../../../api'; 
+import { useForm, Controller } from 'react-hook-form';
 
 const CategoryForm = ({ onCategoryAdded }) => {
-  const [name, setName] = useState('');
+  const { control, handleSubmit, reset, formState: { errors } } = useForm();
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
+  const onSubmit = async (data) => {
     const categoryData = {
-      name,
+      name: data.name,
     };
 
     try {
       const response = await api.post('/category', categoryData);
       if (response.status === 201) {
-
-        if (typeof onSupplierAdded === 'function') {
+        if (typeof onCategoryAdded === 'function') {
           onCategoryAdded(response.data); 
         } else {
-          console.error('onSupplierAdded is not a function');
+          console.error('onCategoryAdded is not a function');
         }
 
         setSnackbarMessage('Categoria cadastrada com sucesso!');
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
-        
-        setName('');
+        reset();  // Limpa os campos do formulário
       }
     } catch (error) {
       setSnackbarMessage('Erro ao cadastrar categoria: ' + (error.response?.data?.message || 'Erro desconhecido.'));
@@ -56,28 +53,36 @@ const CategoryForm = ({ onCategoryAdded }) => {
     <Box>
       <Paper elevation={4} sx={{ padding: 4, borderRadius: 2, backgroundColor: '#f5f5f5' }}>
         <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-          <ClassOutlined sx={{ mr: 1 }} />
+          <CategoryOutlined sx={{ mr: 1 }} />
           Cadastrar Categoria
         </Typography>
-        <Box component="form" onSubmit={handleSubmit}>
-          <TextField
-            label="Nome da Categoria"
-            fullWidth
-            variant="outlined"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <CategoryOutlined />
-                </InputAdornment>
-              ),
-            }}
-            InputLabelProps={{
-              shrink: true,
-            }}
-            sx={{ mb: 2 }} 
+        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+          <Controller
+            name="name"
+            control={control}
+            defaultValue=""
+            rules={{ required: 'Nome da categoria é obrigatório' }}
+            render={({ field }) => (
+              <TextField
+                label="Nome da Categoria"
+                fullWidth
+                variant="outlined"
+                {...field}
+                error={!!errors.name}
+                helperText={errors.name ? errors.name.message : ''}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <CategoryOutlined />
+                    </InputAdornment>
+                  ),
+                }}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={{ mb: 2 }} 
+              />
+            )}
           />
           <Button type="submit" variant="contained" color="primary" sx={{ mt: 4, display: 'flex', alignItems: 'center' }}>
             <AddCircleOutline sx={{ mr: 1 }} />

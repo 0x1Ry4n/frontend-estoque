@@ -17,21 +17,28 @@ import {
   DialogTitle,
 } from '@mui/material';
 import { AddCircleOutline, Inventory2, Warehouse } from '@mui/icons-material';
-import api from './../../../../api';
-import QrScanner from 'react-qr-scanner';
+import { useForm, Controller } from 'react-hook-form'; // Importação do react-hook-form
+import api from './../../../../api'; // Import API
+import QrScanner from 'react-qr-scanner'; // Import QR Scanner
 
 const InventoryForm = ({ onInventoryAdded }) => {
-  const [productId, setProductId] = useState('');
-  const [quantity, setQuantity] = useState('');
-  const [discount, setDiscount] = useState('');
-  const [location, setLocation] = useState('');
+  // States auxiliares
   const [products, setProducts] = useState([]);
-
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  const [isScanning, setIsScanning] = useState(false); 
-  const [openModal, setOpenModal] = useState(false); 
+  const [isScanning, setIsScanning] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
+
+  // Hook do react-hook-form
+  const { control, handleSubmit, reset } = useForm({
+    defaultValues: {
+      productId: '',
+      quantity: '',
+      discount: '',
+      location: '',
+    },
+  });
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -49,17 +56,13 @@ const InventoryForm = ({ onInventoryAdded }) => {
     fetchProducts();
   }, []);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    const inventoryData = {
-      quantity: parseInt(quantity, 10),
-      discount: parseFloat(discount),
-      location,
-    };
-
+  const onSubmit = async (data) => {
     try {
-      const response = await api.post(`/products/${productId}/inventory`, inventoryData);
+      const response = await api.post(`/products/${data.productId}/inventory`, {
+        quantity: parseInt(data.quantity, 10),
+        discount: parseFloat(data.discount),
+        location: data.location,
+      });
       if (response.status === 201) {
         setSnackbarMessage('Inventário cadastrado com sucesso!');
         setSnackbarSeverity('success');
@@ -67,14 +70,9 @@ const InventoryForm = ({ onInventoryAdded }) => {
 
         if (typeof onInventoryAdded === 'function') {
           onInventoryAdded(response.data);
-        } else {
-          console.error('onInventoryAdded is not a function');
         }
 
-        setProductId('');
-        setQuantity('');
-        setDiscount('');
-        setLocation('');
+        reset(); // Reseta o formulário após submissão
       }
     } catch (error) {
       setSnackbarMessage('Erro ao cadastrar inventário: ' + (error.response?.data?.message || 'Erro desconhecido.'));
@@ -83,20 +81,16 @@ const InventoryForm = ({ onInventoryAdded }) => {
     }
   };
 
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false);
-  };
-
   const handleScan = (data) => {
     if (data) {
       console.log(data);
-      setLocation(data.text); 
-      setOpenModal(false); 
+      reset({ location: data.text }); // Atualiza o campo location
+      setOpenModal(false);
     }
   };
 
   const handleError = (err) => {
-    console.error(err); 
+    console.error(err);
   };
 
   const openCameraModal = () => {
@@ -109,6 +103,10 @@ const InventoryForm = ({ onInventoryAdded }) => {
     setIsScanning(false);
   };
 
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
   return (
     <Box>
       <Paper elevation={4} sx={{ padding: 4, borderRadius: 2, backgroundColor: '#f5f5f5' }}>
@@ -116,92 +114,111 @@ const InventoryForm = ({ onInventoryAdded }) => {
           <Inventory2 sx={{ mr: 1 }} />
           Cadastrar Inventário
         </Typography>
-        <Box component="form" onSubmit={handleSubmit}>
+
+        {/* Formulário utilizando react-hook-form */}
+        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={4}>
             <Grid item md={6} xs={12}>
               <FormControl fullWidth required>
                 <InputLabel>Produto</InputLabel>
-                <Select
-                  value={productId}
-                  onChange={(e) => setProductId(e.target.value)}
-                  required
-                >
-                  {products.length > 0 ? (
-                    products.map((product) => (
-                      <MenuItem key={product.id} value={product.id}>
-                        <Warehouse sx={{ mr: 1 }} />
-                        {product.name}
-                      </MenuItem>
-                    ))
-                  ) : (
-                    <MenuItem disabled>No products available</MenuItem>
+                <Controller
+                  name="productId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select {...field} required>
+                      {products.length > 0 ? (
+                        products.map((product) => (
+                          <MenuItem key={product.id} value={product.id}>
+                            <Warehouse sx={{ mr: 1 }} />
+                            {product.name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem disabled>No products available</MenuItem>
+                      )}
+                    </Select>
                   )}
-                </Select>
+                />
               </FormControl>
             </Grid>
 
             <Grid item md={6} xs={12}>
-              <TextField
-                label="Quantidade"
-                fullWidth
-                variant="outlined"
-                type="number"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                required
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <AddCircleOutline />
-                    </InputAdornment>
-                  ),
-                }}
-                InputLabelProps={{
-                  shrink: true,
-                }}
+              <Controller
+                name="quantity"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Quantidade"
+                    fullWidth
+                    variant="outlined"
+                    type="number"
+                    required
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <AddCircleOutline />
+                        </InputAdornment>
+                      ),
+                    }}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                  />
+                )}
               />
             </Grid>
 
             <Grid item md={6} xs={12}>
-              <TextField
-                label="Desconto"
-                fullWidth
-                variant="outlined"
-                type="number"
-                value={discount}
-                onChange={(e) => setDiscount(e.target.value)}
-                required
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <AddCircleOutline />
-                    </InputAdornment>
-                  ),
-                }}
-                InputLabelProps={{
-                  shrink: true,
-                }}
+              <Controller
+                name="discount"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Desconto"
+                    fullWidth
+                    variant="outlined"
+                    type="number"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <AddCircleOutline />
+                        </InputAdornment>
+                      ),
+                    }}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                  />
+                )}
               />
             </Grid>
 
             <Grid item md={6} xs={12}>
-              <TextField
-                label="Localização"
-                fullWidth
-                variant="outlined"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                required
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Button onClick={openCameraModal}>Escanear QR</Button>
-                    </InputAdornment>
-                  ),
-                }}
+              <Controller
+                name="location"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Localização"
+                    fullWidth
+                    required
+                    variant="outlined"
+                    rules={{ required: 'O código de Localização é obrigatório' }}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Button onClick={openCameraModal}>Escanear QR</Button>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
               />
             </Grid>
           </Grid>

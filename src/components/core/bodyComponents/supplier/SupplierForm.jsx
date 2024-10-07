@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Button,
@@ -12,60 +12,26 @@ import {
 import { AddCircleOutline, PersonOutline, EmailOutlined, PhoneOutlined } from '@mui/icons-material';
 import InputMask from 'react-input-mask'; // Importe a biblioteca
 import api from './../../../../api';
+import { useForm, Controller } from 'react-hook-form';
 
 const SupplierForm = ({ onSupplierAdded }) => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [errors, setErrors] = useState({});
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const { control, handleSubmit, reset, formState: { errors } } = useForm();
+  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+  const [snackbarMessage, setSnackbarMessage] = React.useState('');
 
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!name || name.length < 3) {
-      newErrors.name = 'O nome deve ter pelo menos 3 caracteres.';
-    }
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'O e-mail deve ser válido.';
-    }
-    if (!phone || phone.replace(/\D/g, '').length < 10) {
-      newErrors.phone = 'O telefone deve ter pelo menos 10 dígitos.';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
-    const supplierData = {
-      name,
-      email,
-      phone,
-    };
-
+  const onSubmit = async (data) => {
     try {
-      const response = await api.post('/supplier', supplierData);
+      const response = await api.post('/supplier', data);
       if (response.status === 201) {
         if (typeof onSupplierAdded === 'function') {
           onSupplierAdded(response.data); 
         } else {
           console.error('onSupplierAdded is not a function');
         }
+
         setSnackbarMessage('Fornecedor cadastrado com sucesso!');
         setSnackbarOpen(true);
-
-        setName('');
-        setEmail('');
-        setPhone('');
-        setErrors({});
+        reset(); // Limpa o formulário após o envio
       } else {
         setSnackbarMessage('Erro ao cadastrar fornecedor: ' + response.data.message);
         setSnackbarOpen(true);
@@ -88,68 +54,87 @@ const SupplierForm = ({ onSupplierAdded }) => {
           <PersonOutline sx={{ mr: 1 }} />
           Cadastrar Fornecedor
         </Typography>
-        <Box component="form" onSubmit={handleSubmit}>
-          <TextField
-            label="Nome"
-            fullWidth
-            variant="outlined"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            error={!!errors.name}
-            helperText={errors.name}
-            sx={{ mb: 4 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <PersonOutline />
-                </InputAdornment>
-              ),
-            }}
-          />
-          <TextField
-            label="E-mail"
-            fullWidth
-            variant="outlined"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            type="email"
-            error={!!errors.email}
-            helperText={errors.email}
-            sx={{ mb: 4 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <EmailOutlined />
-                </InputAdornment>
-              ),
-            }}
-          />
-          <InputMask
-            mask="(99) 99999-9999"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            required
-          >
-            {() => (
+        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+          <Controller
+            name="name"
+            control={control}
+            defaultValue=""
+            rules={{ required: 'O nome é obrigatório.', minLength: { value: 3, message: 'O nome deve ter pelo menos 3 caracteres.' } }}
+            render={({ field }) => (
               <TextField
-                label="Telefone"
+                label="Nome"
                 fullWidth
                 variant="outlined"
-                error={!!errors.phone}
-                helperText={errors.phone}
+                {...field}
+                error={!!errors.name}
+                helperText={errors.name ? errors.name.message : ''}
                 sx={{ mb: 4 }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <PhoneOutlined />
+                      <PersonOutline />
                     </InputAdornment>
                   ),
                 }}
               />
             )}
-          </InputMask>
+          />
+          <Controller
+            name="email"
+            control={control}
+            defaultValue=""
+            rules={{ required: 'O e-mail é obrigatório.', pattern: { value: /\S+@\S+\.\S+/, message: 'O e-mail deve ser válido.' } }}
+            render={({ field }) => (
+              <TextField
+                label="E-mail"
+                fullWidth
+                variant="outlined"
+                {...field}
+                error={!!errors.email}
+                helperText={errors.email ? errors.email.message : ''}
+                sx={{ mb: 4 }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailOutlined />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            )}
+          />
+          <Controller
+            name="phone"
+            control={control}
+            defaultValue=""
+            rules={{ required: 'O telefone é obrigatório.' }}
+            render={({ field }) => (
+              <InputMask
+                mask="(99) 99999-9999"
+                value={field.value}
+                onChange={field.onChange}
+                required
+              >
+                {() => (
+                  <TextField
+                    label="Telefone"
+                    fullWidth
+                    variant="outlined"
+                    error={!!errors.phone}
+                    helperText={errors.phone ? errors.phone.message : ''}
+                    sx={{ mb: 4 }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PhoneOutlined />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
+              </InputMask>
+            )}
+          />
           <Button type="submit" variant="contained" color="primary" sx={{ mt: 4, display: 'flex', alignItems: 'center' }}>
             <AddCircleOutline sx={{ mr: 1 }} />
             Cadastrar Fornecedor

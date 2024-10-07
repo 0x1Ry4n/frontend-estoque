@@ -71,13 +71,6 @@ const Products = () => {
   };
 
   const handleSave = async () => {
-    if (!selectedProduct.name || !selectedProduct.categoryId || !selectedProduct.unitPrice || !selectedProduct.expirationDate) {
-      setSnackbarMessage("Por favor, preencha todos os campos!");
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-      return;
-    }
-
     try {
       const productToSave = {
         ...selectedProduct,
@@ -200,7 +193,7 @@ const Products = () => {
       <Button 
         variant="outlined" 
         startIcon={<RefreshIcon />} 
-        onClick={handleRefresh} // Botão para atualizar a lista manualmente
+        onClick={handleRefresh} 
         sx={{ mb: 2 }}
       >
         Atualizar Lista
@@ -221,7 +214,7 @@ const Products = () => {
             margin="normal"
             value={selectedProduct?.name || ""}
             onChange={(e) => setSelectedProduct({ ...selectedProduct, name: e.target.value })}
-            InputProps={{ readOnly: isEditing }} 
+            InputProps={{ readOnly: true }} 
           />
           <TextField
             label="Categoria"
@@ -229,7 +222,7 @@ const Products = () => {
             margin="normal"
             value={selectedProduct?.categoryId || ""}
             onChange={(e) => setSelectedProduct({ ...selectedProduct, categoryId: e.target.value })}
-            InputProps={{ readOnly: isEditing }} 
+            InputProps={{ readOnly: true }} 
           />
           <TextField
             label="Descrição"
@@ -237,7 +230,6 @@ const Products = () => {
             margin="normal"
             value={selectedProduct?.description || ""}
             onChange={(e) => setSelectedProduct({ ...selectedProduct, description: e.target.value })}
-            InputProps={{ readOnly: isEditing }} 
           />
           <TextField
             label="Preço"
@@ -246,7 +238,6 @@ const Products = () => {
             margin="normal"
             value={selectedProduct?.unitPrice || ""}
             onChange={(e) => setSelectedProduct({ ...selectedProduct, unitPrice: parseFloat(e.target.value) })}
-            InputProps={{ readOnly: isEditing }} 
           />
           <TextField
             label="Quantidade em Estoque (Original)" 
@@ -265,16 +256,16 @@ const Products = () => {
           <TextField
             label="Data de Expiração"
             fullWidth
-            type="date"
             margin="normal"
-            value={selectedProduct?.expirationDate || ""}
+            type="date"
+            value={selectedProduct?.expirationDate ? selectedProduct.expirationDate.split('T')[0] : ""}
             onChange={(e) => setSelectedProduct({ ...selectedProduct, expirationDate: e.target.value })}
-            InputProps={{ readOnly: isEditing }} 
+            InputProps={{ readOnly: true }} 
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose} color="primary">Cancelar</Button>
-          <Button onClick={handleSave} color="primary">{isEditing ? "Salvar" : "Adicionar"}</Button>
+          <Button onClick={handleClose}>Cancelar</Button>
+          <Button onClick={handleSave}>Salvar</Button>
         </DialogActions>
       </Dialog>
 

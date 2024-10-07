@@ -228,7 +228,6 @@ const Customers = () => {
                         margin="normal"
                         value={selectedCustomer?.fullname || ""}
                         onChange={(e) => setSelectedCustomer({ ...selectedCustomer, fullname: e.target.value })}
-                        required
                     />
                     <TextField
                         label="E-mail"
@@ -236,7 +235,6 @@ const Customers = () => {
                         margin="normal"
                         value={selectedCustomer?.email || ""}
                         onChange={(e) => setSelectedCustomer({ ...selectedCustomer, email: e.target.value })}
-                        required
                     />
                     <TextField
                         label="Telefone"
@@ -244,7 +242,6 @@ const Customers = () => {
                         margin="normal"
                         value={selectedCustomer?.phone || ""}
                         onChange={(e) => setSelectedCustomer({ ...selectedCustomer, phone: e.target.value })}
-                        required
                     />
                     <TextField
                         label="CPF"

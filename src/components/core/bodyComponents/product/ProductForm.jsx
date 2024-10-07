@@ -25,15 +25,12 @@ import {
   AddShoppingCart as AddShoppingCartIcon,
   AddCircleOutline,
 } from '@mui/icons-material';
-import api from './../../../../api'; 
+import InputMask from 'react-input-mask'; // Importe a biblioteca
+import api from './../../../../api';
+import { useForm, Controller } from 'react-hook-form';
 
 const ProductForm = ({ onProductAdded }) => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [unitPrice, setUnitPrice] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [suppliersId, setSuppliersId] = useState([]);
-  const [expirationDate, setExpirationDate] = useState('');
+  const { control, handleSubmit, reset, formState: { errors } } = useForm();
   const [categories, setCategories] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
 
@@ -57,37 +54,26 @@ const ProductForm = ({ onProductAdded }) => {
     fetchSuppliers();
   }, []);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    const productData = {
-      name,
-      description,
-      unitPrice: parseFloat(unitPrice),
-      categoryId,
-      suppliersId,
-      expirationDate,
-    };
-
+  const onSubmit = async (data) => {
     try {
+      const productData = {
+        ...data,
+        unitPrice: parseFloat(data.unitPrice), // Certifique-se de que o preço é um número
+      };
+
       const response = await api.post('/products', productData); 
       if (response.status === 201) {
         setSnackbarMessage('Produto cadastrado com sucesso!');
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
 
-        if (typeof onSupplierAdded === 'function') {
+        if (typeof onProductAdded === 'function') {
           onProductAdded(response.data.content);
         } else {
-          console.error('onSupplierAdded is not a function');
+          console.error('onProductAdded is not a function');
         }
    
-        setName('');
-        setDescription('');
-        setUnitPrice('');
-        setCategoryId('');
-        setSuppliersId([]);
-        setExpirationDate('');
+        reset(); // Limpa o formulário após o envio
       }
     } catch (error) {
       setSnackbarMessage('Erro ao cadastrar produto: ' + (error.response?.data?.message || 'Erro desconhecido.'));
@@ -107,126 +93,171 @@ const ProductForm = ({ onProductAdded }) => {
           <AddShoppingCartIcon sx={{ mr: 1 }} />
           Cadastrar Produto
         </Typography>
-        <Box component="form" onSubmit={handleSubmit}>
+        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={4}>
             <Grid item md={6}>
-              <TextField
-                label="Nome"
-                fullWidth
-                variant="outlined"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                sx={{ mb: 2 }} 
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <AddIcon />
-                    </InputAdornment>
-                  ),
-                }}
-                InputLabelProps={{
-                  shrink: true,
-                }}
+              <Controller
+                name="name"
+                control={control}
+                defaultValue=""
+                rules={{ required: 'O nome é obrigatório.' }}
+                render={({ field }) => (
+                  <TextField
+                    label="Nome"
+                    fullWidth
+                    variant="outlined"
+                    {...field}
+                    error={!!errors.name}
+                    helperText={errors.name ? errors.name.message : ''}
+                    sx={{ mb: 2 }} 
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <AddIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                  />
+                )}
               />
             </Grid>
             <Grid item md={6}>
-              <TextField
-                label="Preço Unitário"
-                type="number"
-                fullWidth
-                variant="outlined"
-                value={unitPrice}
-                onChange={(e) => setUnitPrice(e.target.value)}
-                required
-                sx={{ mb: 2 }} // Espaçamento abaixo
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PriceCheckIcon />
-                    </InputAdornment>
-                  ),
-                }}
-                InputLabelProps={{
-                  shrink: true,
-                }}
+              <Controller
+                name="unitPrice"
+                control={control}
+                defaultValue=""
+                rules={{ required: 'O preço unitário é obrigatório.' }}
+                render={({ field }) => (
+                  <TextField
+                    label="Preço Unitário"
+                    type="number"
+                    fullWidth
+                    variant="outlined"
+                    {...field}
+                    error={!!errors.unitPrice}
+                    helperText={errors.unitPrice ? errors.unitPrice.message : ''}
+                    sx={{ mb: 2 }} 
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PriceCheckIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                  />
+                )}
               />
             </Grid>
             <Grid item md={12}>
-              <TextField
-                label="Descrição"
-                fullWidth
-                variant="outlined"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-                sx={{ mb: 2 }} 
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <DescriptionIcon />
-                    </InputAdornment>
-                  ),
-                }}
-                InputLabelProps={{
-                  shrink: true,
-                }}
+              <Controller
+                name="description"
+                control={control}
+                defaultValue=""
+                rules={{ required: 'A descrição é obrigatória.' }}
+                render={({ field }) => (
+                  <TextField
+                    label="Descrição"
+                    fullWidth
+                    variant="outlined"
+                    {...field}
+                    error={!!errors.description}
+                    helperText={errors.description ? errors.description.message : ''}
+                    sx={{ mb: 2 }} 
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <DescriptionIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                  />
+                )}
               />
             </Grid>
             <Grid item md={6}>
               <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
                 <InputLabel>Categoria</InputLabel>
-                <Select
-                  value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
-                  required
-                >
-                  {categories.map((category) => (
-                    <MenuItem key={category.id} value={category.id}>
-                      <CategoryIcon sx={{ mr: 1 }} />
-                      {category.name}
-                    </MenuItem>
-                  ))}
-                </Select>
+                <Controller
+                  name="categoryId"
+                  control={control}
+                  defaultValue=""
+                  rules={{ required: 'A categoria é obrigatória.' }}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      required
+                      error={!!errors.categoryId}
+                    >
+                      {categories.map((category) => (
+                        <MenuItem key={category.id} value={category.id}>
+                          <CategoryIcon sx={{ mr: 1 }} />
+                          {category.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                />
+                {errors.categoryId && <p style={{ color: 'red' }}>{errors.categoryId.message}</p>}
               </FormControl>
             </Grid>
             <Grid item md={6}>
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel>Fornecedores</InputLabel>
-                <Select
-                  multiple
-                  value={suppliersId}
-                  onChange={(e) => setSuppliersId(e.target.value)}
-                  renderValue={(selected) => selected.join(', ')}
-                >
-                  {suppliers.map((supplier) => (
-                    <MenuItem key={supplier.id} value={supplier.id}>
-                      <Checkbox checked={suppliersId.indexOf(supplier.id) > -1} />
-                      <ListItemText primary={supplier.name} />
-                    </MenuItem>
-                  ))}
-                </Select>
+                <Controller
+                  name="suppliersId"
+                  control={control}
+                  defaultValue={[]}
+                  render={({ field }) => (
+                    <Select
+                      multiple
+                      {...field}
+                      renderValue={(selected) => selected.join(', ')}
+                    >
+                      {suppliers.map((supplier) => (
+                        <MenuItem key={supplier.id} value={supplier.id}>
+                          <Checkbox checked={field.value.indexOf(supplier.id) > -1} />
+                          <ListItemText primary={supplier.name} />
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                />
               </FormControl>
             </Grid>
             <Grid item md={6}>
-              <TextField
-                label="Data de Expiração"
-                type="date"
-                fullWidth
-                variant="outlined"
-                value={expirationDate}
-                onChange={(e) => setExpirationDate(e.target.value)}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                sx={{ mb: 2 }} 
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <DateRangeIcon />
-                    </InputAdornment>
-                  ),
-                }}
+              <Controller
+                name="expirationDate"
+                control={control}
+                defaultValue=""
+                render={({ field }) => (
+                  <TextField
+                    label="Data de Expiração"
+                    type="date"
+                    fullWidth
+                    variant="outlined"
+                    {...field}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    sx={{ mb: 2 }} 
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <DateRangeIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
               />
             </Grid>
           </Grid>
