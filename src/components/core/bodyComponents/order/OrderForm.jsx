@@ -13,12 +13,10 @@ import {
   InputAdornment,
   CircularProgress,
   Snackbar,
+  Alert,
 } from '@mui/material';
 import {
   Add as AddIcon,
-  ShoppingCart as ShoppingCartIcon,
-  Description as DescriptionIcon,
-  Payment as PaymentIcon,
   AddCircleOutline
 } from '@mui/icons-material';
 import api from './../../../../api';
@@ -74,16 +72,16 @@ const OrderForm = ({ onOrderAdded }) => {
           if (Array.isArray(response.data)) {
             setInventories(response.data);
           } else if (response.data) {
-            setInventories([response.data]); // Se não for array, converta para array
+            setInventories([response.data]); 
           } else {
-            setInventories([]); // Defina como array vazio se não houver dados
+            setInventories([]);
           }
         } catch (error) {
           console.error('Erro ao buscar inventário:', error);
-          setInventories([]); // Trate o erro definindo como array vazio
+          setInventories([]); 
         }
       } else {
-        setInventories([]); // Limpe o inventário se nenhum produto estiver selecionado
+        setInventories([]);
       }
     };
   
@@ -111,7 +109,12 @@ const OrderForm = ({ onOrderAdded }) => {
       const response = await api.post('/orders', orderData);
       if (response.status === 201) {
         setSuccessMessage('Pedido cadastrado com sucesso!');
-        onOrderAdded(response.data.content);
+
+        if (typeof onOrderAdded === 'function') {
+          onOrderAdded(response.data.content); 
+        } else {
+          console.error('onSupplierAdded is not a function');
+        }
 
         setCustomerId('');
         setProductId('');
@@ -135,7 +138,7 @@ const OrderForm = ({ onOrderAdded }) => {
     <Box>
       <Paper elevation={4} sx={{ padding: 4, borderRadius: 2, backgroundColor: '#f5f5f5' }}>
         <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-      <AddCircleOutline sx={{ mr: 1 }} /> Cadastrar Pedido
+          <AddCircleOutline sx={{ mr: 1 }} /> Cadastrar Pedido
         </Typography>
         <Box component="form" onSubmit={handleSubmit}>
           {loading && <CircularProgress />}
@@ -165,22 +168,22 @@ const OrderForm = ({ onOrderAdded }) => {
               </FormControl>
             </Grid>
             <Grid item md={6}>
-            <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-              <InputLabel>Inventário</InputLabel>
-              <Select value={inventoryId} onChange={(e) => setInventoryId(e.target.value)} required>
-                {Array.isArray(inventories) && inventories.length > 0 ? (
-                  inventories.map((inventory) => (
-                    <MenuItem key={inventory.id} value={inventory.id}>
-                      {inventory.id} - {inventory.quantity} em estoque
+              <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+                <InputLabel>Inventário</InputLabel>
+                <Select value={inventoryId} onChange={(e) => setInventoryId(e.target.value)} required>
+                  {Array.isArray(inventories) && inventories.length > 0 ? (
+                    inventories.map((inventory) => (
+                      <MenuItem key={inventory.id} value={inventory.id}>
+                        {inventory.location} - {inventory.quantity} em estoque
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled value="">
+                      Nenhum inventário disponível
                     </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled value="">
-                    Nenhum inventário disponível
-                  </MenuItem>
-                )}
-              </Select>
-            </FormControl>
+                  )}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item md={6}>
               <TextField
@@ -237,12 +240,17 @@ const OrderForm = ({ onOrderAdded }) => {
             Cadastrar Pedido
           </Button>
         </Box>
+        
         <Snackbar
           open={!!errorMessage || !!successMessage}
           autoHideDuration={6000}
           onClose={handleSnackbarClose}
-          message={errorMessage || successMessage}
-        />
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert onClose={handleSnackbarClose} severity={errorMessage ? 'error' : 'success'} sx={{ width: '100%' }}>
+            {errorMessage || successMessage}
+          </Alert>
+        </Snackbar>
       </Paper>
     </Box>
   );

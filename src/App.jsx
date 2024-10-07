@@ -20,6 +20,7 @@ import CustomerManagement from "./components/core/bodyComponents/customer/Custom
 import SupplierManagement from "./components/core/bodyComponents/supplier/SupplierManagement";
 import InventoryManagement from "./components/core/bodyComponents/inventory/InventoryManagement";
 import OrderManagement from "./components/core/bodyComponents/order/OrderManagement";
+import QRCodeGenerator from "./components/core/bodyComponents/qrcode/QRCodeGenerator";
 
 function App() {
   const theme = createTheme({
@@ -61,6 +62,7 @@ function App() {
         <Route path="/growth" element={<PrivateRoute><Growth /></PrivateRoute>} />
         <Route path="/reports" element={<PrivateRoute><Report /></PrivateRoute>} />
         <Route path="/settings" element={<PrivateRoute><Setting /></PrivateRoute>} />
+        <Route path="/qrcode-generator" element={<PrivateRoute><QRCodeGenerator /></PrivateRoute>} />
       </Route>
     )
   );

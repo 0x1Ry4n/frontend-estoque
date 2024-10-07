@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Snackbar, Alert, CircularProgress } from "@mui/material";
-import { Delete as DeleteIcon, Edit as EditIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import { Delete as DeleteIcon, Edit as EditIcon, Visibility as VisibilityIcon, Refresh as RefreshIcon } from '@mui/icons-material';
 import { DataGrid } from "@mui/x-data-grid";
 import api from '../../../../api'; 
 
@@ -14,30 +14,30 @@ const Orders = () => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(false);  // Adiciona estado de carregamento
+  const [loading, setLoading] = useState(false);  
 
   useEffect(() => {
-    const fetchOrders = async () => {
-        setLoading(true); // Activate loading state
-        try {
-            const response = await api.get('/orders/details');
-            // Map the response to include a unique `id` for each row
-            const ordersWithId = response.data.content.map(order => ({
-                id: order.orderId, // Use `orderId` as the unique id
-                ...order // Spread the rest of the order properties
-            }));
-            setRows(ordersWithId); // Set rows with the unique id
-        } catch (error) {
-            setSnackbarMessage("Erro ao carregar pedidos.");
-            setSnackbarSeverity("error");
-            setSnackbarOpen(true);
-        } finally {
-            setLoading(false); // Deactivate loading state
-        }
-    };
+    fetchOrders(); // Carregar pedidos ao montar o componente
+  }, []);
 
-    fetchOrders();
-}, []);
+  const fetchOrders = async () => {
+    setLoading(true); 
+    try {
+      const response = await api.get('/orders/details');
+
+      const ordersWithId = response.data.content.map(order => ({
+        id: order.orderId, 
+        ...order 
+      }));
+      setRows(ordersWithId); 
+    } catch (error) {
+      setSnackbarMessage("Erro ao carregar pedidos.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false); 
+    }
+  };
 
   const handleClickOpen = (order) => {
     setSelectedOrder(order || { fullName: "", totalPrice: 0, orderDate: "", paymentMethod: "", orderStatus: "", customer: { cpf: "", email: "", phone: "" } });
@@ -97,7 +97,7 @@ const Orders = () => {
         setSnackbarMessage("Pedido atualizado com sucesso!");
       } else {
         const response = await api.post('/orders', orderToSave);
-        setRows([...rows, response.data]);  // Insere o novo pedido na lista de pedidos
+        setRows([...rows, response.data]);  
         setSnackbarMessage("Pedido adicionado com sucesso!");
       }
       setSnackbarSeverity("success");
@@ -108,6 +108,13 @@ const Orders = () => {
       handleClose();
       setSnackbarOpen(true);
     }
+  };
+
+  const handleRefresh = () => {
+    fetchOrders(); 
+    setSnackbarMessage("Lista de pedidos atualizada!");
+    setSnackbarSeverity("info");
+    setSnackbarOpen(true);
   };
 
   const columns = [
@@ -136,6 +143,12 @@ const Orders = () => {
       width: 150,
       type: 'date',
       valueGetter: (params) => new Date(params.row.orderDate),
+    },
+    {
+      field: "productName",
+      headerName: "Nome do Produto",
+      width: 150,
+      valueGetter: (params) => (params.row.inventory.productName || ""),
     },
     {
       field: "totalPrice",
@@ -189,13 +202,21 @@ const Orders = () => {
 
   return (
     <div style={{ padding: '20px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
+      <Button 
+        variant="outlined" 
+        startIcon={<RefreshIcon />} 
+        onClick={handleRefresh} // Botão para atualizar a lista de pedidos
+        sx={{ mb: 2 }}
+      >
+        Atualizar Lista
+      </Button>
       <div style={{ height: 400, width: '100%', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
         {loading ? (  // Mostra o carregamento enquanto os dados estão sendo buscados
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
             <CircularProgress />
           </div>
         ) : (
-          <DataGrid rows={rows} columns={columns} checkboxSelection />
+          <DataGrid rows={rows} columns={columns} />
         )}
       </div>
 
@@ -234,32 +255,11 @@ const Orders = () => {
             onChange={(e) => setSelectedOrder({ ...selectedOrder, paymentMethod: e.target.value })}
           />
           <TextField
-            label="Status do Pedido"
+            label="Status"
             fullWidth
             margin="normal"
             value={selectedOrder?.orderStatus || ""}
             onChange={(e) => setSelectedOrder({ ...selectedOrder, orderStatus: e.target.value })}
-          />
-          <TextField
-            label="CPF do Cliente"
-            fullWidth
-            margin="normal"
-            value={selectedOrder?.customer?.cpf || ""}
-            onChange={(e) => setSelectedOrder({ ...selectedOrder, customer: { ...selectedOrder.customer, cpf: e.target.value } })}
-          />
-          <TextField
-            label="Email do Cliente"
-            fullWidth
-            margin="normal"
-            value={selectedOrder?.customer?.email || ""}
-            onChange={(e) => setSelectedOrder({ ...selectedOrder, customer: { ...selectedOrder.customer, email: e.target.value } })}
-          />
-          <TextField
-            label="Telefone do Cliente"
-            fullWidth
-            margin="normal"
-            value={selectedOrder?.customer?.phone || ""}
-            onChange={(e) => setSelectedOrder({ ...selectedOrder, customer: { ...selectedOrder.customer, phone: e.target.value } })}
           />
         </DialogContent>
         <DialogActions>
@@ -281,7 +281,6 @@ const Orders = () => {
         <p><strong>Valor Total:</strong> {detailedOrder.totalPrice.toFixed(2)} BRL</p>
         <p><strong>Data do Pedido:</strong> {new Date(detailedOrder.orderDate).toLocaleDateString()}</p>
 
-        {/* Linha divisória para separar as seções */}
         <hr />
 
         {/* Informações do Cliente */}
@@ -299,7 +298,6 @@ const Orders = () => {
         <p><strong>Status do Cliente:</strong> {detailedOrder.customer.customerStatus}</p>
         <p><strong>Data de Criação do Cliente:</strong> {new Date(detailedOrder.customer.createdAt).toLocaleDateString()}</p>
 
-        {/* Linha divisória para separar as seções */}
         <hr />
 
         {/* Informações do Inventário */}

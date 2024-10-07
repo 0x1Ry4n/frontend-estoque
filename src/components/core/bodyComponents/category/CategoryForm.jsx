@@ -1,4 +1,3 @@
-// CategoryForm.js
 import React, { useState } from 'react';
 import {
   Box,
@@ -7,12 +6,17 @@ import {
   Typography,
   Paper,
   InputAdornment,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { AddCircleOutline, CategoryOutlined, ClassOutlined } from '@mui/icons-material';
 import api from './../../../../api'; 
 
 const CategoryForm = ({ onCategoryAdded }) => {
   const [name, setName] = useState('');
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -24,15 +28,28 @@ const CategoryForm = ({ onCategoryAdded }) => {
     try {
       const response = await api.post('/category', categoryData);
       if (response.status === 201) {
-        alert('Categoria cadastrada com sucesso!');
-        
-        onCategoryAdded(response.data); 
 
-        setName(''); 
+        if (typeof onSupplierAdded === 'function') {
+          onCategoryAdded(response.data); 
+        } else {
+          console.error('onSupplierAdded is not a function');
+        }
+
+        setSnackbarMessage('Categoria cadastrada com sucesso!');
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
+        
+        setName('');
       }
     } catch (error) {
-      alert('Erro ao cadastrar categoria: ' + error.response?.data?.message || 'Erro desconhecido.');
+      setSnackbarMessage('Erro ao cadastrar categoria: ' + (error.response?.data?.message || 'Erro desconhecido.'));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
     }
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
   };
 
   return (
@@ -68,6 +85,17 @@ const CategoryForm = ({ onCategoryAdded }) => {
           </Button>
         </Box>
       </Paper>
+
+      {/* Snackbar para feedback */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

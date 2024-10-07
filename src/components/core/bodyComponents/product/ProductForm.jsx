@@ -1,4 +1,3 @@
-// ProductForm.js
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -14,6 +13,8 @@ import {
   Paper,
   Grid,
   InputAdornment,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -35,6 +36,11 @@ const ProductForm = ({ onProductAdded }) => {
   const [expirationDate, setExpirationDate] = useState('');
   const [categories, setCategories] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
+
+  // Snackbar states
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -66,10 +72,16 @@ const ProductForm = ({ onProductAdded }) => {
     try {
       const response = await api.post('/products', productData); 
       if (response.status === 201) {
-        alert('Produto cadastrado com sucesso!');
+        setSnackbarMessage('Produto cadastrado com sucesso!');
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
 
-        onProductAdded(response.data.content);
-
+        if (typeof onSupplierAdded === 'function') {
+          onProductAdded(response.data.content);
+        } else {
+          console.error('onSupplierAdded is not a function');
+        }
+   
         setName('');
         setDescription('');
         setUnitPrice('');
@@ -78,12 +90,18 @@ const ProductForm = ({ onProductAdded }) => {
         setExpirationDate('');
       }
     } catch (error) {
-      alert('Erro ao cadastrar produto: ' + error.response?.data?.message || 'Erro desconhecido.');
+      setSnackbarMessage('Erro ao cadastrar produto: ' + (error.response?.data?.message || 'Erro desconhecido.'));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
     }
   };
 
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
   return (
-    <Box sx={{}}>
+    <Box>
       <Paper elevation={4} sx={{ padding: 4, borderRadius: 2, backgroundColor: '#f5f5f5' }}>
         <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
           <AddShoppingCartIcon sx={{ mr: 1 }} />
@@ -163,8 +181,7 @@ const ProductForm = ({ onProductAdded }) => {
                   onChange={(e) => setCategoryId(e.target.value)}
                   required
                 >
-                  {
-                  categories.map((category) => (
+                  {categories.map((category) => (
                     <MenuItem key={category.id} value={category.id}>
                       <CategoryIcon sx={{ mr: 1 }} />
                       {category.name}
@@ -219,6 +236,16 @@ const ProductForm = ({ onProductAdded }) => {
           </Button>
         </Box>
       </Paper>
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

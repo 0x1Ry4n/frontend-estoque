@@ -42,7 +42,7 @@ export default function SideBarComponent() {
     { title: "Saídas", route: "orders", component: <CardTravelOutlined /> },
     { title: "Receita", route: "revenue", component: <MonetizationOnOutlined /> },
     { title: "Crescimento", route: "growth", component: <TrendingUpOutlined /> },
-    { title: "Relatórios", route: "reports", component: <DescriptionOutlined /> },
+    { title: "Relatórios", route: "qrcode-generator", component: <DescriptionOutlined /> },
     { title: "Configurações", route: "settings", component: <SettingsOutlined /> },
   ];
 

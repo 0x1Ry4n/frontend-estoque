@@ -9,7 +9,7 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import { Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
+import { Delete as DeleteIcon, Edit as EditIcon, Refresh as RefreshIcon } from '@mui/icons-material';
 import { DataGrid } from "@mui/x-data-grid";
 import api from '../../../../api';
 
@@ -24,33 +24,33 @@ const Inventory = () => {
   const [products, setProducts] = useState([]); // State to hold product data
 
   useEffect(() => {
-    const fetchInventory = async () => {
-      try {
-        const response = await api.get('/products/inventory');
-        setRows(response.data.content);
-        await fetchProducts(); // Fetch products after getting inventory
-      } catch (error) {
-        console.error("Erro ao buscar inventário: ", error);
-        setSnackbarMessage("Erro ao carregar inventário.");
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
-      }
-    };
-
-    const fetchProducts = async () => {
-      try {
-        const response = await api.get('/products'); // Assuming there's an endpoint for products
-        setProducts(response.data.content);
-      } catch (error) {
-        console.error("Erro ao buscar produtos: ", error);
-        setSnackbarMessage("Erro ao carregar produtos.");
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
-      }
-    };
-
-    fetchInventory();
+    fetchInventory(); // Fetch inventory data when component mounts
   }, []);
+
+  const fetchInventory = async () => {
+    try {
+      const response = await api.get('/products/inventory');
+      setRows(response.data.content);
+      await fetchProducts(); // Fetch products after getting inventory
+    } catch (error) {
+      console.error("Erro ao buscar inventário: ", error);
+      setSnackbarMessage("Erro ao carregar inventário.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const response = await api.get('/products'); // Assuming there's an endpoint for products
+      setProducts(response.data.content);
+    } catch (error) {
+      console.error("Erro ao buscar produtos: ", error);
+      setSnackbarMessage("Erro ao carregar produtos.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
+  };
 
   const handleClickOpen = (inventory) => {
     setSelectedInventory(inventory);
@@ -67,7 +67,7 @@ const Inventory = () => {
   const handleDelete = async (inventory) => {
     try {
       await api.delete(`/products/${inventory[0].productId}/inventory/${inventory[0].id}`);
-      setRows(rows.filter((row) => !inventory[0].id.includes(row.id)));
+      setRows(rows.filter((row) => row.id !== inventory[0].id)); // Fix for filtering rows
       setSnackbarMessage("Item de inventário deletado com sucesso!");
       setSnackbarSeverity("success");
     } catch (error) {
@@ -109,6 +109,13 @@ const Inventory = () => {
     }
   };
 
+  const handleRefresh = () => {
+    fetchInventory(); // Refresh inventory list on button click
+    setSnackbarMessage("Lista de inventário atualizada!");
+    setSnackbarSeverity("info");
+    setSnackbarOpen(true);
+  };
+
   const columns = [
     { field: "id", headerName: "ID", width: 90 },
     { field: "productId", headerName: "Produto ID", width: 150 },
@@ -127,20 +134,20 @@ const Inventory = () => {
       width: 150,
       valueGetter: (params) => {
         const product = products.find((p) => p.id === params.row.productId);
-        return product ? product.unitPrice.toFixed(2) : '0.00'; // Assuming unitPrice is a property of the product
+        return product ? product.unitPrice.toFixed(2) : '0.00';
       }
     },
     { field: "quantity", headerName: "Quantidade", width: 150, type: 'number' },
     { field: "discount", headerName: "Desconto", width: 150, type: 'number' },
     {
-        field: "totalValue",
-        headerName: "Valor Total (Lote)",
-        width: 150,
-        valueGetter: (params) => {
-          const product = products.find((p) => p.id === params.row.productId);
-          const unitPrice = product ? product.unitPrice : 0; 
-          return (unitPrice * params.row.quantity).toFixed(2);
-        }
+      field: "totalValue",
+      headerName: "Valor Total (Lote)",
+      width: 150,
+      valueGetter: (params) => {
+        const product = products.find((p) => p.id === params.row.productId);
+        const unitPrice = product ? product.unitPrice : 0; 
+        return (unitPrice * params.row.quantity).toFixed(2);
+      }
     },
     { field: "location", headerName: "Localização", width: 150 },
     {
@@ -162,11 +169,18 @@ const Inventory = () => {
 
   return (
     <div style={{ padding: '20px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
+      <Button 
+        variant="outlined" 
+        startIcon={<RefreshIcon />} 
+        onClick={handleRefresh} // Button to refresh the inventory list
+        sx={{ mb: 2 }}
+      >
+        Atualizar Lista
+      </Button>
       <div style={{ height: 400, width: '100%', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
         <DataGrid
           rows={rows}
           columns={columns}
-          checkboxSelection
         />
       </div>
 
@@ -179,6 +193,7 @@ const Inventory = () => {
             margin="normal"
             value={selectedInventory?.productId || ""}
             onChange={(e) => setSelectedInventory({ ...selectedInventory, productId: e.target.value })}
+            InputProps={{ readOnly: true }} 
           />
           <TextField
             label="Quantidade"
@@ -202,6 +217,7 @@ const Inventory = () => {
             margin="normal"
             value={selectedInventory?.location || ""}
             onChange={(e) => setSelectedInventory({ ...selectedInventory, location: e.target.value })}
+            InputProps={{ readOnly: true }} 
           />
         </DialogContent>
         <DialogActions>

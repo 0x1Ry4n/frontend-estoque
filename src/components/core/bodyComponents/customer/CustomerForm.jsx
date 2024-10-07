@@ -7,36 +7,35 @@ import {
   Paper,
   InputAdornment,
   FormControl,
-  FormControlLabel,
-  Radio,
-  RadioGroup,
+  Select,
+  MenuItem,
   Checkbox,
+  Alert,
+  FormControlLabel,
   Grid,
+  Snackbar
 } from '@mui/material';
 import { AddCircleOutline, PersonOutline, EmailOutlined, PhoneOutlined, DescriptionOutlined, LocationOnOutlined } from '@mui/icons-material';
 import api from './../../../../api';
+import { useForm, Controller } from 'react-hook-form';
+import InputMask from 'react-input-mask'; 
 
 const CustomerForm = ({ onCustomerAdded }) => {
-  const [fullname, setFullname] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [cpf, setCpf] = useState('');
-  const [cep, setCep] = useState('');
-  const [notes, setNotes] = useState('');
+  const { control, handleSubmit, reset, formState: { errors } } = useForm();
   const [preferredPaymentMethod, setPreferredPaymentMethod] = useState('CREDIT_CARD');
   const [communicationPreference, setCommunicationPreference] = useState('EMAIL');
   const [isDefaultCustomer, setIsDefaultCustomer] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
+  const onSubmit = async (data) => {
     const customerData = {
-      fullname: isDefaultCustomer ? null : fullname,
-      email: isDefaultCustomer ? null : email,
-      phone: isDefaultCustomer ? null : phone,
-      cpf: isDefaultCustomer ? null : cpf,
-      cep: isDefaultCustomer ? null : cep,
-      notes,
+      fullname: isDefaultCustomer ? null : data.fullname,
+      email: isDefaultCustomer ? null : data.email,
+      phone: isDefaultCustomer ? null : data.phone,
+      cpf: isDefaultCustomer ? null : data.cpf,
+      cep: isDefaultCustomer ? null : data.cep,
+      notes: data.notes,
       preferredPaymentMethod,
       communicationPreference,
       isDefaultCustomer,
@@ -45,22 +44,25 @@ const CustomerForm = ({ onCustomerAdded }) => {
     try {
       const response = await api.post('/customer', customerData);
       if (response.status === 201) {
-        onCustomerAdded(response.data);
+        if (typeof onCustomerAdded === 'function') {
+          onCustomerAdded(response.data); 
+        } else {
+          console.error('onSupplierAdded is not a function');
+        }
 
-        // Limpar campos após o envio
-        setFullname('');
-        setEmail('');
-        setPhone('');
-        setCpf('');
-        setCep('');
-        setNotes('');
-        setPreferredPaymentMethod('CREDIT_CARD');
-        setCommunicationPreference('EMAIL');
-        setIsDefaultCustomer(false);
+        setSnackbarMessage('Cliente cadastrado com sucesso!');
+        setSnackbarOpen(true);
+        reset(); 
       }
     } catch (error) {
-        console.log(error);
+      console.error("Erro ao cadastrar cliente:", error);
+      setSnackbarMessage('Erro ao cadastrar cliente!');
+      setSnackbarOpen(true);
     }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
   };
 
   return (
@@ -70,65 +72,168 @@ const CustomerForm = ({ onCustomerAdded }) => {
           <PersonOutline sx={{ mr: 1 }} />
           Cadastrar Cliente
         </Typography>
-        <Box component="form" onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           {!isDefaultCustomer && (
             <>
-              <TextField
-                label="Nome Completo"
-                fullWidth
-                variant="outlined"
-                value={fullname}
-                onChange={(e) => setFullname(e.target.value)}
-                required
-                sx={{ mb: 4 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PersonOutline />
-                    </InputAdornment>
-                  ),
-                }}
+              <Controller
+                name="fullname"
+                control={control}
+                defaultValue=""
+                rules={{ required: 'Nome completo é obrigatório' }}
+                render={({ field }) => (
+                  <TextField
+                    label="Nome Completo"
+                    fullWidth
+                    variant="outlined"
+                    {...field}
+                    error={!!errors.fullname}
+                    helperText={errors.fullname ? errors.fullname.message : ''}
+                    sx={{ mb: 4 }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PersonOutline />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
               />
-              <TextField
-                label="E-mail"
-                fullWidth
-                variant="outlined"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                type="email"
-                sx={{ mb: 4 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <EmailOutlined />
-                    </InputAdornment>
-                  ),
-                }}
+              <Controller
+                name="email"
+                control={control}
+                defaultValue=""
+                rules={{ required: 'E-mail é obrigatório', pattern: { value: /^\S+@\S+$/i, message: 'Formato de e-mail inválido' }}}
+                render={({ field }) => (
+                  <TextField
+                    label="E-mail"
+                    fullWidth
+                    variant="outlined"
+                    type="email"
+                    {...field}
+                    error={!!errors.email}
+                    helperText={errors.email ? errors.email.message : ''}
+                    sx={{ mb: 4 }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <EmailOutlined />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
               />
-              <TextField
-                label="Telefone"
-                fullWidth
-                variant="outlined"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                required
-                sx={{ mb: 4 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PhoneOutlined />
-                    </InputAdornment>
-                  ),
-                }}
+              <Controller
+                name="phone"
+                control={control}
+                defaultValue=""
+                rules={{ required: 'Telefone é obrigatório' }}
+                render={({ field }) => (
+                  <InputMask
+                    mask="(99) 99999-9999"
+                    value={field.value}
+                    onChange={field.onChange}
+                    required
+                  >
+                    {() => (
+                      <TextField
+                        label="Telefone"
+                        fullWidth
+                        variant="outlined"
+                        error={!!errors.phone}
+                        helperText={errors.phone ? errors.phone.message : ''}
+                        sx={{ mb: 4 }}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <PhoneOutlined />
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    )}
+                  </InputMask>
+                )}
               />
+              <Controller
+                name="cpf"
+                control={control}
+                defaultValue=""
+                rules={{ required: 'CPF é obrigatório', pattern: { value: /^\d{3}\.\d{3}\.\d{3}-\d{2}$/, message: 'Formato de CPF inválido' }}}
+                render={({ field }) => (
+                  <InputMask
+                    mask="999.999.999-99"
+                    value={field.value}
+                    onChange={field.onChange}
+                    required
+                  >
+                    {() => (
+                      <TextField
+                        label="CPF"
+                        fullWidth
+                        variant="outlined"
+                        error={!!errors.cpf}
+                        helperText={errors.cpf ? errors.cpf.message : ''}
+                        sx={{ mb: 4 }}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <DescriptionOutlined />
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    )}
+                  </InputMask>
+                )}
+              />
+              <Controller
+                name="cep"
+                control={control}
+                defaultValue=""
+                rules={{ required: 'CEP é obrigatório', pattern: { value: /^\d{5}-\d{3}$/, message: 'Formato de CEP inválido' }}}
+                render={({ field }) => (
+                  <InputMask
+                    mask="99999-999"
+                    value={field.value}
+                    onChange={field.onChange}
+                    required
+                  >
+                    {() => (
+                      <TextField
+                        label="CEP"
+                        fullWidth
+                        variant="outlined"
+                        error={!!errors.cep}
+                        helperText={errors.cep ? errors.cep.message : ''}
+                        sx={{ mb: 4 }}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <LocationOnOutlined />
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    )}
+                  </InputMask>
+                )}
+              />
+            </>
+          )}
+          <Controller
+            name="notes"
+            control={control}
+            defaultValue=""
+            render={({ field }) => (
               <TextField
-                label="CPF"
+                label="Notas"
                 fullWidth
                 variant="outlined"
-                value={cpf}
-                onChange={(e) => setCpf(e.target.value)}
-                required
+                {...field}
+                multiline
+                rows={4}
                 sx={{ mb: 4 }}
                 InputProps={{
                   startAdornment: (
@@ -138,69 +243,38 @@ const CustomerForm = ({ onCustomerAdded }) => {
                   ),
                 }}
               />
-              <TextField
-                label="CEP"
-                fullWidth
-                variant="outlined"
-                value={cep}
-                onChange={(e) => setCep(e.target.value)}
-                required
-                sx={{ mb: 4 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LocationOnOutlined />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </>
-          )}
-          <TextField
-            label="Notas"
-            fullWidth
-            variant="outlined"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            multiline
-            rows={4}
-            sx={{ mb: 4 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <DescriptionOutlined />
-                </InputAdornment>
-              ),
-            }}
+            )}
           />
 
           <Grid container spacing={4} sx={{ mb: 4 }}>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
                 <Typography variant="subtitle1" sx={{ mb: 1 }}>Método de Pagamento Preferido</Typography>
-                <RadioGroup
+                <Select
                   value={preferredPaymentMethod}
                   onChange={(e) => setPreferredPaymentMethod(e.target.value)}
+                  variant="outlined"
                 >
-                  <FormControlLabel value="CREDIT_CARD" control={<Radio />} label="Cartão de Crédito" />
-                  <FormControlLabel value="DEBIT_CARD" control={<Radio />} label="Cartão de Débito" />
-                  <FormControlLabel value="MONEY" control={<Radio />} label="Dinheiro" />
-                  <FormControlLabel value="ANY" control={<Radio />} label="Qualquer um" />
-                </RadioGroup>
+                  <MenuItem value="CREDIT_CARD">Cartão de Crédito</MenuItem>
+                  <MenuItem value="DEBIT_CARD">Cartão de Débito</MenuItem>
+                  <MenuItem value="MONEY">Dinheiro</MenuItem>
+                  <MenuItem value="ANY">Qualquer um</MenuItem>
+                </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
                 <Typography variant="subtitle1" sx={{ mb: 1 }}>Preferência de Comunicação</Typography>
-                <RadioGroup
+                <Select
                   value={communicationPreference}
                   onChange={(e) => setCommunicationPreference(e.target.value)}
+                  variant="outlined"
                 >
-                  <FormControlLabel value="EMAIL" control={<Radio />} label="E-mail" />
-                  <FormControlLabel value="SMS" control={<Radio />} label="SMS" />
-                  <FormControlLabel value="PHONE" control={<Radio />} label="Telefone" />
-                  <FormControlLabel value="ANY" control={<Radio />} label="Qualquer um" />
-                </RadioGroup>
+                  <MenuItem value="EMAIL">E-mail</MenuItem>
+                  <MenuItem value="SMS">SMS</MenuItem>
+                  <MenuItem value="PHONE">Telefone</MenuItem>
+                  <MenuItem value="ANY">Qualquer um</MenuItem>
+                </Select>
               </FormControl>
             </Grid>
           </Grid>
@@ -219,8 +293,14 @@ const CustomerForm = ({ onCustomerAdded }) => {
             <AddCircleOutline sx={{ mr: 1 }} />
             Cadastrar Cliente
           </Button>
-        </Box>
+        </form>
       </Paper>
+
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbarMessage.includes('Erro') ? 'error' : 'success'} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Snackbar, Alert } from "@mui/material";
-import { Delete as DeleteIcon, Edit as EditIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import { Delete as DeleteIcon, Edit as EditIcon, Visibility as VisibilityIcon, Refresh as RefreshIcon } from '@mui/icons-material';
 import { DataGrid } from "@mui/x-data-grid";
 import api from '../../../../api'; 
 
@@ -16,20 +16,21 @@ const Products = () => {
   const [isEditing, setIsEditing] = useState(false); 
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await api.get('/products');
-        setRows(response.data.content);
-      } catch (error) {
-        console.error("Erro ao buscar produtos: ", error);
-        setSnackbarMessage("Erro ao carregar produtos.");
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
-      }
-    };
-
-    fetchProducts();
+    fetchProducts(); // Chama a função para buscar produtos ao carregar o componente
   }, []);
+
+  // Função para atualizar a lista de produtos
+  const fetchProducts = async () => {
+    try {
+      const response = await api.get('/products');
+      setRows(response.data.content);
+    } catch (error) {
+      console.error("Erro ao buscar produtos: ", error);
+      setSnackbarMessage("Erro ao carregar produtos.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
+  };
 
   const handleClickOpen = (product) => {
     setSelectedProduct(product);
@@ -103,6 +104,13 @@ const Products = () => {
     }
   };
 
+  const handleRefresh = () => {
+    fetchProducts(); // Atualiza a lista ao clicar no botão de refresh
+    setSnackbarMessage("Lista de produtos atualizada!");
+    setSnackbarSeverity("info");
+    setSnackbarOpen(true);
+  };
+
   const columns = [
     { field: "id", headerName: "ID", width: 90 },
     {
@@ -115,7 +123,7 @@ const Products = () => {
       field: "categoryId",
       headerName: "Categoria",
       width: 200,
-      editable: true,
+      editable: false,
     },
     {
       field: "description",
@@ -189,11 +197,18 @@ const Products = () => {
 
   return (
     <div style={{ padding: '20px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
+      <Button 
+        variant="outlined" 
+        startIcon={<RefreshIcon />} 
+        onClick={handleRefresh} // Botão para atualizar a lista manualmente
+        sx={{ mb: 2 }}
+      >
+        Atualizar Lista
+      </Button>
       <div style={{ height: 400, width: '100%', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
         <DataGrid
           rows={rows}
           columns={columns}
-          checkboxSelection
         />
       </div>
       
@@ -254,15 +269,12 @@ const Products = () => {
             margin="normal"
             value={selectedProduct?.expirationDate || ""}
             onChange={(e) => setSelectedProduct({ ...selectedProduct, expirationDate: e.target.value })}
-            InputLabelProps={{
-              shrink: true,
-            }}
             InputProps={{ readOnly: isEditing }} 
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancelar</Button>
-          {isEditing && <Button onClick={handleSave}>Confirmar</Button>} 
+          <Button onClick={handleClose} color="primary">Cancelar</Button>
+          <Button onClick={handleSave} color="primary">{isEditing ? "Salvar" : "Adicionar"}</Button>
         </DialogActions>
       </Dialog>
 
