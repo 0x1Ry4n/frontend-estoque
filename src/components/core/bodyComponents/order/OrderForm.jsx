@@ -5,29 +5,25 @@ import {
   TextField,
   Typography,
   FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Paper,
   Grid,
-  InputAdornment,
+  Select,
+  MenuItem,
   CircularProgress,
   Snackbar,
   Alert,
+  Autocomplete,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  AddCircleOutline
-} from '@mui/icons-material';
+import { AddCircleOutline } from '@mui/icons-material';
 import api from './../../../../api';
 
 const OrderForm = ({ onOrderAdded }) => {
-  const [customerId, setCustomerId] = useState('');
-  const [productId, setProductId] = useState('');
-  const [inventoryId, setInventoryId] = useState('');
+  const [customerId, setCustomerId] = useState(null);
+  const [productId, setProductId] = useState(null);
+  const [inventoryId, setInventoryId] = useState(null);
   const [quantity, setQuantity] = useState(1);
-  const [paymentMethod, setPaymentMethod] = useState('');
-  const [status, setStatus] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('CREDIT_CARD');
+  const [status, setStatus] = useState('DELIVERED');
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
   const [inventories, setInventories] = useState([]);
@@ -35,6 +31,7 @@ const OrderForm = ({ onOrderAdded }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
+  // Fetch customers and products
   useEffect(() => {
     const fetchCustomers = async () => {
       setLoading(true);
@@ -64,29 +61,30 @@ const OrderForm = ({ onOrderAdded }) => {
     fetchProducts();
   }, []);
 
-  useEffect(() => {
-    const fetchInventories = async () => {
-      if (productId) {
-        try {
-          const response = await api.get(`/products/${productId}/inventory`);
-          if (Array.isArray(response.data)) {
-            setInventories(response.data);
-          } else if (response.data) {
-            setInventories([response.data]); 
+  const handleProductChange = async (event, newValue) => {
+    if (newValue) {
+      setProductId(newValue); // O novo valor é o objeto do produto
+      setInventoryId(null); // Reset inventory when changing product
+
+      try {
+        // Use newValue.id para acessar o id do produto
+        const response = await api.get(`/products/${newValue.id}/inventory`);
+        if (Array.isArray(response.data)) {
+          setInventories(response.data);
+          if (response.data.length > 0) {
+            setInventoryId(response.data[0]); // Seleciona o primeiro inventário
           } else {
-            setInventories([]);
+            setInventoryId(null); // Nenhum inventário disponível
           }
-        } catch (error) {
-          console.error('Erro ao buscar inventário:', error);
-          setInventories([]); 
+        } else {
+          setInventories([]); // Se não for uma lista, reseta
         }
-      } else {
-        setInventories([]);
+      } catch (error) {
+        console.error('Erro ao buscar inventário:', error);
+        setInventories([]); // Limpa a lista de inventários em caso de erro
       }
-    };
-  
-    fetchInventories();
-  }, [productId]);
+    }
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -97,9 +95,9 @@ const OrderForm = ({ onOrderAdded }) => {
     }
 
     const orderData = {
-      customerId,
-      productId,
-      inventoryId,
+      customerId: customerId?.id,
+      productId: productId?.id,
+      inventoryId: inventoryId?.id,
       quantity,
       paymentMethod,
       status,
@@ -109,19 +107,15 @@ const OrderForm = ({ onOrderAdded }) => {
       const response = await api.post('/orders', orderData);
       if (response.status === 201) {
         setSuccessMessage('Pedido cadastrado com sucesso!');
-
         if (typeof onOrderAdded === 'function') {
-          onOrderAdded(response.data.content); 
-        } else {
-          console.error('onSupplierAdded is not a function');
+          onOrderAdded(response.data.content);
         }
-
-        setCustomerId('');
-        setProductId('');
-        setInventoryId('');
+        setCustomerId(null);
+        setProductId(null);
+        setInventoryId(null);
         setQuantity(1);
-        setPaymentMethod('');
-        setStatus('');
+        setPaymentMethod('CREDIT_CARD'); // Reset to default value
+        setStatus('DELIVERED'); // Reset to default value
         setInventories([]);
       }
     } catch (error) {
@@ -138,54 +132,50 @@ const OrderForm = ({ onOrderAdded }) => {
     <Box>
       <Paper elevation={4} sx={{ padding: 4, borderRadius: 2, backgroundColor: '#f5f5f5' }}>
         <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-          <AddCircleOutline sx={{ mr: 1 }} /> 
+          <AddCircleOutline sx={{ mr: 1 }} />
           Cadastrar Pedido
         </Typography>
         <Box component="form" onSubmit={handleSubmit}>
           {loading && <CircularProgress />}
           <Grid container spacing={4}>
             <Grid item md={6}>
-              <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-                <InputLabel>Cliente</InputLabel>
-                <Select value={customerId} onChange={(e) => setCustomerId(e.target.value)} required>
-                  {customers.map((customer) => (
-                    <MenuItem key={customer.id} value={customer.id}>
-                      {customer.fullname}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <Autocomplete
+                value={customerId}
+                onChange={(event, newValue) => setCustomerId(newValue)}
+                options={customers}
+                getOptionLabel={(option) => option.fullname || ''}
+                renderInput={(params) => (
+                  <TextField {...params} label="Cliente" variant="outlined" required />
+                )}
+              />
             </Grid>
             <Grid item md={6}>
-              <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-                <InputLabel>Produto</InputLabel>
-                <Select value={productId} onChange={(e) => setProductId(e.target.value)} required>
-                  {products.map((product) => (
-                    <MenuItem key={product.id} value={product.id}>
-                      {product.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <Autocomplete
+                value={productId}
+                onChange={handleProductChange}
+                options={products}
+                getOptionLabel={(option) => option.name || ''}
+                renderInput={(params) => (
+                  <TextField {...params} label="Produto" variant="outlined" required />
+                )}
+              />
             </Grid>
+
             <Grid item md={6}>
-              <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-                <InputLabel>Inventário</InputLabel>
-                <Select value={inventoryId} onChange={(e) => setInventoryId(e.target.value)} required>
-                  {Array.isArray(inventories) && inventories.length > 0 ? (
-                    inventories.map((inventory) => (
-                      <MenuItem key={inventory.id} value={inventory.id}>
-                        {inventory.location} - {inventory.quantity} em estoque
-                      </MenuItem>
-                    ))
-                  ) : (
-                    <MenuItem disabled value="">
-                      Nenhum inventário disponível
-                    </MenuItem>
-                  )}
-                </Select>
-              </FormControl>
+              <Autocomplete
+                value={inventoryId}
+                onChange={(event, newValue) => setInventoryId(newValue)}
+                options={inventories}
+                getOptionLabel={(option) =>
+                  `${option.location} (${option.quantity} disponíveis)`
+                }
+                renderInput={(params) => (
+                  <TextField {...params} label="Inventário" variant="outlined" required />
+                )}
+                disabled={!productId} // Disable if no product is selected
+              />
             </Grid>
+
             <Grid item md={6}>
               <TextField
                 label="Quantidade"
@@ -195,24 +185,19 @@ const OrderForm = ({ onOrderAdded }) => {
                 value={quantity}
                 onChange={(e) => setQuantity(Number(e.target.value))}
                 required
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <AddIcon />
-                    </InputAdornment>
-                  ),
-                }}
                 InputLabelProps={{
                   shrink: true,
                 }}
               />
             </Grid>
+
             <Grid item md={6}>
               <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-                <InputLabel>Método de Pagamento</InputLabel>
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>Método de Pagamento</Typography>
                 <Select
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
+                  variant="outlined"
                   required
                 >
                   <MenuItem value="CREDIT_CARD">Cartão de Crédito</MenuItem>
@@ -222,12 +207,14 @@ const OrderForm = ({ onOrderAdded }) => {
                 </Select>
               </FormControl>
             </Grid>
+
             <Grid item md={6}>
               <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-                <InputLabel>Status do Pedido</InputLabel>
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>Status de Entrega</Typography>
                 <Select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
+                  variant="outlined"
                   required
                 >
                   <MenuItem value="PENDING">Pendente</MenuItem>
@@ -237,11 +224,12 @@ const OrderForm = ({ onOrderAdded }) => {
               </FormControl>
             </Grid>
           </Grid>
+
           <Button type="submit" variant="contained" color="primary" sx={{ mt: 4 }}>
             Cadastrar Pedido
           </Button>
         </Box>
-        
+
         <Snackbar
           open={!!errorMessage || !!successMessage}
           autoHideDuration={6000}

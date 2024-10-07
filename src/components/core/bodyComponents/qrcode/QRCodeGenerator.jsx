@@ -14,6 +14,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 const QRCodeGenerator = () => {
   const [baseCode, setBaseCode] = useState(''); 
   const [quantity, setQuantity] = useState(1);
+  const [accumulator, setAccumulator] = useState(1); // Estado para o acumulador
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
@@ -31,6 +32,13 @@ const QRCodeGenerator = () => {
     } 
   };
 
+  const handleAccumulatorChange = (event) => {
+    const value = parseInt(event.target.value, 10);
+    if (value > 0) {
+      setAccumulator(value); // Atualiza o acumulador
+    }
+  };
+
   const handleDownloadAll = () => {
     for (let i = 0; i < quantity; i++) {
       const qrCodeCanvas = canvasRefs.current[i];
@@ -38,7 +46,7 @@ const QRCodeGenerator = () => {
         const pngUrl = qrCodeCanvas.toDataURL('image/png');
         const downloadLink = document.createElement('a');
         downloadLink.href = pngUrl;
-        downloadLink.download = `${baseCode}-${i + 1}.png`; 
+        downloadLink.download = `${baseCode}-${String(accumulator + i).padStart(3, '0')}.png`; 
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
@@ -81,13 +89,22 @@ const QRCodeGenerator = () => {
           onChange={handleQuantityChange}
           sx={{ mb: 4 }}
         />
+        <TextField
+          label="Acumulador (inicial)"
+          variant="outlined"
+          type="number"
+          fullWidth
+          value={accumulator}
+          onChange={handleAccumulatorChange}
+          sx={{ mb: 4 }}
+        />
         <Box sx={{ mt: 3 }}>
           <Grid container spacing={4} justifyContent="center">
             {Array.from({ length: Math.min(quantity, 5) }).map((_, index) => (
               <Grid item key={index} xs={6} sm={4} md={3} lg={2} sx={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
                 <QRCodeCanvas
                   ref={(el) => (canvasRefs.current[index] = el)}
-                  value={`${baseCode}-${index + 1}`}
+                  value={`${baseCode}-${String(accumulator + index).padStart(3, '0')}`} // Use o acumulador para gerar o código
                   size={256}
                   style={{ marginBottom: '16px' }}
                   marginSize={2}

@@ -231,7 +231,7 @@ const Orders = () => {
             label="Nome do Cliente"
             fullWidth
             margin="normal"
-            value={selectedOrder?.fullName || ""}
+            value={selectedOrder?.customer.fullname || ""}
             onChange={(e) => setSelectedOrder({ ...selectedOrder, fullName: e.target.value })}
           />
           <TextField

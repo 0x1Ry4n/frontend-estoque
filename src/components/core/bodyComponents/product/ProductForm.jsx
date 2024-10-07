@@ -4,12 +4,6 @@ import {
   Button,
   TextField,
   Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Checkbox,
-  ListItemText,
   Paper,
   Grid,
   InputAdornment,
@@ -25,7 +19,7 @@ import {
   AddShoppingCart as AddShoppingCartIcon,
   AddCircleOutline,
 } from '@mui/icons-material';
-import InputMask from 'react-input-mask'; // Importe a biblioteca
+import { Autocomplete } from '@mui/material';
 import api from './../../../../api';
 import { useForm, Controller } from 'react-hook-form';
 
@@ -184,54 +178,63 @@ const ProductForm = ({ onProductAdded }) => {
               />
             </Grid>
             <Grid item md={6}>
-              <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-                <InputLabel>Categoria</InputLabel>
-                <Controller
-                  name="categoryId"
-                  control={control}
-                  defaultValue=""
-                  rules={{ required: 'A categoria é obrigatória.' }}
-                  render={({ field }) => (
-                    <Select
-                      {...field}
-                      required
-                      error={!!errors.categoryId}
-                    >
-                      {categories.map((category) => (
-                        <MenuItem key={category.id} value={category.id}>
-                          <CategoryIcon sx={{ mr: 1 }} />
-                          {category.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  )}
-                />
-                {errors.categoryId && <p style={{ color: 'red' }}>{errors.categoryId.message}</p>}
-              </FormControl>
+              <Controller
+                name="categoryId"
+                control={control}
+                defaultValue=""
+                rules={{ required: 'A categoria é obrigatória.' }} // Adicionando a regra de validação
+                render={({ field }) => (
+                  <Autocomplete
+                    options={categories}
+                    getOptionLabel={(option) => option.name}
+                    filterSelectedOptions
+                    onChange={(_, value) => {
+                      // Aqui estamos passando apenas o ID da categoria selecionada
+                      field.onChange(value ? value.id : ''); // Se value for null, passamos uma string vazia
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        variant="outlined"
+                        required
+                        label="Categoria"
+                        placeholder="Pesquisar categorias"
+                        error={!!errors.categoryId} // Verifica se há erro
+                        helperText={errors.categoryId ? errors.categoryId.message : ''} // Exibe a mensagem de erro
+                      />
+                    )}
+                  />
+                )}
+              />
             </Grid>
-            <Grid item md={6}>
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Fornecedores</InputLabel>
-                <Controller
-                  name="suppliersId"
-                  control={control}
-                  defaultValue={[]}
-                  render={({ field }) => (
-                    <Select
-                      multiple
-                      {...field}
-                      renderValue={(selected) => selected.join(', ')}
-                    >
-                      {suppliers.map((supplier) => (
-                        <MenuItem key={supplier.id} value={supplier.id}>
-                          <Checkbox checked={field.value.indexOf(supplier.id) > -1} />
-                          <ListItemText primary={supplier.name} />
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  )}
-                />
-              </FormControl>
+                        <Grid item md={6}>
+              <Controller
+                name="suppliersId"
+                control={control}
+                defaultValue={[]}
+                rules={{ required: 'Pelo menos um fornecedor é obrigatório.' }} 
+                render={({ field }) => (
+                  <Autocomplete
+                    multiple
+                    options={suppliers}
+                    getOptionLabel={(option) => option.name}
+                    filterSelectedOptions
+                    onChange={(_, value) => {
+                      field.onChange(value.map((item) => item.id));
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        variant="outlined"
+                        label="Fornecedores"
+                        placeholder="Pesquisar fornecedores"
+                        error={!!errors.suppliersId} // Verifica se há erro
+                        helperText={errors.suppliersId ? errors.suppliersId.message : ''} // Exibe a mensagem de erro
+                      />
+                    )}
+                  />
+                )}
+              />
             </Grid>
             <Grid item md={6}>
               <Controller

@@ -6,23 +6,20 @@ import {
   Typography,
   Paper,
   InputAdornment,
-  Select,
-  MenuItem,
   FormControl,
-  InputLabel,
   Grid,
   Snackbar,
   Alert,
   Dialog,
   DialogTitle,
 } from '@mui/material';
-import { AddCircleOutline, Inventory2, Warehouse } from '@mui/icons-material';
-import { useForm, Controller } from 'react-hook-form'; // Importação do react-hook-form
-import api from './../../../../api'; // Import API
-import QrScanner from 'react-qr-scanner'; // Import QR Scanner
+import { AddCircleOutline, Inventory2 } from '@mui/icons-material';
+import { useForm, Controller } from 'react-hook-form'; 
+import api from './../../../../api';
+import QrScanner from 'react-qr-scanner'; 
+import Autocomplete from '@mui/material/Autocomplete'; 
 
 const InventoryForm = ({ onInventoryAdded }) => {
-  // States auxiliares
   const [products, setProducts] = useState([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -30,7 +27,6 @@ const InventoryForm = ({ onInventoryAdded }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [openModal, setOpenModal] = useState(false);
 
-  // Hook do react-hook-form
   const { control, handleSubmit, reset } = useForm({
     defaultValues: {
       productId: '',
@@ -44,7 +40,6 @@ const InventoryForm = ({ onInventoryAdded }) => {
     const fetchProducts = async () => {
       try {
         const response = await api.get('/products');
-        console.log(response.data.content);
         setProducts(Array.isArray(response.data.content) ? response.data.content : []);
       } catch (error) {
         setSnackbarMessage('Erro ao carregar produtos: ' + (error.response?.data?.message || 'Erro desconhecido.'));
@@ -115,31 +110,31 @@ const InventoryForm = ({ onInventoryAdded }) => {
           Cadastrar Inventário
         </Typography>
 
-        {/* Formulário utilizando react-hook-form */}
         <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={4}>
             <Grid item md={6} xs={12}>
-              <FormControl fullWidth required>
-                <InputLabel>Produto</InputLabel>
-                <Controller
-                  name="productId"
-                  control={control}
-                  render={({ field }) => (
-                    <Select {...field} required>
-                      {products.length > 0 ? (
-                        products.map((product) => (
-                          <MenuItem key={product.id} value={product.id}>
-                            <Warehouse sx={{ mr: 1 }} />
-                            {product.name}
-                          </MenuItem>
-                        ))
-                      ) : (
-                        <MenuItem disabled>No products available</MenuItem>
-                      )}
-                    </Select>
+            <Controller
+              name="productId"
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <Autocomplete
+                  options={products} 
+                  getOptionLabel={(option) => option?.name || ''} // Certifique-se de que option.name existe
+                  isOptionEqualToValue={(option, value) => option.id === value?.id} // Comparação correta do valor selecionado
+                  value={products.find((product) => product.id === value) || null} // Ajusta o valor selecionado
+                  onChange={(_, selectedOption) => onChange(selectedOption ? selectedOption.id : '')} // Garante que o ID do produto seja atualizado
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Produto"
+                      variant="outlined"
+                      required
+                      placeholder="Pesquisar Produto"
+                    />
                   )}
                 />
-              </FormControl>
+              )}
+            />
             </Grid>
 
             <Grid item md={6} xs={12}>
@@ -206,7 +201,6 @@ const InventoryForm = ({ onInventoryAdded }) => {
                     fullWidth
                     required
                     variant="outlined"
-                    rules={{ required: 'O código de Localização é obrigatório' }}
                     InputLabelProps={{
                       shrink: true,
                     }}
