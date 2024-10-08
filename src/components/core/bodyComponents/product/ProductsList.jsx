@@ -16,10 +16,10 @@ const Products = () => {
   const [isEditing, setIsEditing] = useState(false); 
 
   useEffect(() => {
-    fetchProducts(); // Chama a função para buscar produtos ao carregar o componente
+    fetchProducts(); 
   }, []);
 
-  // Função para atualizar a lista de produtos
+
   const fetchProducts = async () => {
     try {
       const response = await api.get('/products');
@@ -98,7 +98,7 @@ const Products = () => {
   };
 
   const handleRefresh = () => {
-    fetchProducts(); // Atualiza a lista ao clicar no botão de refresh
+    fetchProducts(); 
     setSnackbarMessage("Lista de produtos atualizada!");
     setSnackbarSeverity("info");
     setSnackbarOpen(true);
@@ -113,7 +113,7 @@ const Products = () => {
       editable: true,
     },
     {
-      field: "categoryId",
+      field: "categoryName",
       headerName: "Categoria",
       width: 200,
       editable: false,
@@ -126,7 +126,7 @@ const Products = () => {
     },
     {
       field: "unitPrice",
-      headerName: "Preço",
+      headerName: "Preço Unitário",
       width: 150,
       editable: true,
     },
@@ -220,8 +220,8 @@ const Products = () => {
             label="Categoria"
             fullWidth
             margin="normal"
-            value={selectedProduct?.categoryId || ""}
-            onChange={(e) => setSelectedProduct({ ...selectedProduct, categoryId: e.target.value })}
+            value={selectedProduct?.categoryName || ""}
+            onChange={(e) => setSelectedProduct({ ...selectedProduct, categoryName: e.target.value })}
             InputProps={{ readOnly: true }} 
           />
           <TextField
@@ -232,7 +232,7 @@ const Products = () => {
             onChange={(e) => setSelectedProduct({ ...selectedProduct, description: e.target.value })}
           />
           <TextField
-            label="Preço"
+            label="Preço Unitário"
             fullWidth
             type="number"
             margin="normal"

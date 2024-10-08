@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Snackbar, Alert, CircularProgress } from "@mui/material";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Snackbar, Alert, CircularProgress, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { Delete as DeleteIcon, Edit as EditIcon, Visibility as VisibilityIcon, Refresh as RefreshIcon } from '@mui/icons-material';
 import { DataGrid } from "@mui/x-data-grid";
 import api from '../../../../api'; 
@@ -13,8 +13,20 @@ const Orders = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
-  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);  
+
+  const paymentMethods = {
+    CREDIT_CARD: "Cartão de Crédito",
+    DEBIT_CARD: "Cartão de Débito",
+    MONEY: "Dinheiro",
+    ANY: "Qualquer um"
+  };
+
+  const orderStatus = {
+    DELIVERED: "Entregue", 
+    PENDING: "Pendente",
+    IN_PROGRESS: "Em progresso"
+  };
 
   useEffect(() => {
     fetchOrders(); 
@@ -33,8 +45,7 @@ const Orders = () => {
         setRows(ordersWithId); 
       } 
     } catch (error) {
-
-      if (response.status === 404) return;
+      if (error.response && error.response.status === 404) return;
 
       setSnackbarMessage("Erro ao carregar pedidos.");
       setSnackbarSeverity("error");
@@ -44,16 +55,9 @@ const Orders = () => {
     }
   };
 
-  const handleClickOpen = (order) => {
-    setSelectedOrder(order || { fullName: "", totalPrice: 0, orderDate: "", paymentMethod: "", orderStatus: "", customer: { cpf: "", email: "", phone: "" } });
-    setOpen(true);
-    setIsEditing(!!order);
-  };
-
   const handleClose = () => {
     setOpen(false);
     setSelectedOrder(null);
-    setIsEditing(false);
   };
 
   const handleDetailOpen = async (id) => {
@@ -78,38 +82,6 @@ const Orders = () => {
       setSnackbarMessage("Erro ao deletar pedido.");
       setSnackbarSeverity("error");
     } finally {
-      setSnackbarOpen(true);
-    }
-  };
-
-  const handleSave = async () => {
-    const { fullName, totalPrice, orderDate, paymentMethod, orderStatus } = selectedOrder;
-    
-    if (!fullName || !totalPrice || !orderDate || !paymentMethod || !orderStatus) {
-      setSnackbarMessage("Por favor, preencha todos os campos obrigatórios.");
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-      return;
-    }
-
-    try {
-      const orderToSave = { ...selectedOrder };
-
-      if (isEditing) {
-        await api.patch(`/orders/${selectedOrder.id}`, orderToSave);
-        setRows(rows.map((row) => (row.id === selectedOrder.id ? orderToSave : row)));
-        setSnackbarMessage("Pedido atualizado com sucesso!");
-      } else {
-        const response = await api.post('/orders', orderToSave);
-        setRows([...rows, response.data]);  
-        setSnackbarMessage("Pedido adicionado com sucesso!");
-      }
-      setSnackbarSeverity("success");
-    } catch (error) {
-      setSnackbarMessage("Erro ao salvar pedido.");
-      setSnackbarSeverity("error");
-    } finally {
-      handleClose();
       setSnackbarOpen(true);
     }
   };
@@ -155,6 +127,12 @@ const Orders = () => {
       valueGetter: (params) => (params.row.inventory.productName || ""),
     },
     {
+      field: "quantity",
+      headerName: "Quantidade Pedido",
+      width: 150,
+      valueGetter: (params) => (params.row.quantity ? params.row.quantity : ""),
+    },
+    {
       field: "totalPrice",
       headerName: "Valor Total",
       width: 150,
@@ -164,13 +142,13 @@ const Orders = () => {
       field: "paymentMethod",
       headerName: "Método de Pagamento",
       width: 180,
-      valueGetter: (params) => params.row.paymentMethod || "",
+      valueGetter: (params) => paymentMethods[params.value] || params.value
     },
     {
       field: "orderStatus",
       headerName: "Status",
       width: 150,
-      valueGetter: (params) => params.row.orderStatus || "",
+      valueGetter: (params) => orderStatus[params.value] || params.value
     },
     {
       field: "inventoryLocation",
@@ -190,9 +168,6 @@ const Orders = () => {
       width: 200,
       renderCell: (cellData) => (
         <>
-          <Button onClick={() => handleClickOpen(cellData.row)}>
-            <EditIcon />
-          </Button>
           <Button onClick={() => handleDelete([cellData.row.id])}>
             <DeleteIcon />
           </Button>
@@ -209,13 +184,13 @@ const Orders = () => {
       <Button 
         variant="outlined" 
         startIcon={<RefreshIcon />} 
-        onClick={handleRefresh} // Botão para atualizar a lista de pedidos
+        onClick={handleRefresh} 
         sx={{ mb: 2 }}
       >
         Atualizar Lista
       </Button>
       <div style={{ height: 400, width: '100%', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
-        {loading ? (  // Mostra o carregamento enquanto os dados estão sendo buscados
+        {loading ? (  
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
             <CircularProgress />
           </div>
@@ -225,7 +200,7 @@ const Orders = () => {
       </div>
 
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>{isEditing ? "Editar Pedido" : "Adicionar Pedido"}</DialogTitle>
+        <DialogTitle>Adicionar Pedido</DialogTitle>
         <DialogContent>
           <TextField
             label="Nome do Cliente"
@@ -233,44 +208,70 @@ const Orders = () => {
             margin="normal"
             value={selectedOrder?.customer.fullname || ""}
             onChange={(e) => setSelectedOrder({ ...selectedOrder, fullName: e.target.value })}
+            InputProps={{ readOnly: true }}
           />
           <TextField
-            label="Valor Total"
+            label="CPF do Cliente"
             fullWidth
-            type="number"
             margin="normal"
-            value={selectedOrder?.totalPrice || ""}
-            onChange={(e) => setSelectedOrder({ ...selectedOrder, totalPrice: parseFloat(e.target.value) })}
+            value={selectedOrder?.customer.cpf || ""}
+            onChange={(e) => setSelectedOrder({ ...selectedOrder, cpf: e.target.value })}
+            InputProps={{ readOnly: true }}
+          />
+          <TextField
+            label="Telefone do Cliente"
+            fullWidth
+            margin="normal"
+            value={selectedOrder?.customer.phone || ""}
+            onChange={(e) => setSelectedOrder({ ...selectedOrder, phone: e.target.value })}
+            InputProps={{ readOnly: true }}
           />
           <TextField
             label="Data do Pedido"
             fullWidth
-            type="date"
             margin="normal"
             value={selectedOrder?.orderDate || ""}
             onChange={(e) => setSelectedOrder({ ...selectedOrder, orderDate: e.target.value })}
-            InputLabelProps={{ shrink: true }}
+            InputProps={{ readOnly: true }}
           />
           <TextField
             label="Método de Pagamento"
             fullWidth
             margin="normal"
+            select
             value={selectedOrder?.paymentMethod || ""}
             onChange={(e) => setSelectedOrder({ ...selectedOrder, paymentMethod: e.target.value })}
-          />
+            InputProps={{ readOnly: true }}
+          >
+            {Object.entries(paymentMethods).map(([value, label]) => (
+              <MenuItem key={value} value={value}>
+                {label}
+              </MenuItem>
+            ))}
+          </TextField>
           <TextField
-            label="Status"
+            label="Status do Pedido"
             fullWidth
             margin="normal"
+            select
             value={selectedOrder?.orderStatus || ""}
             onChange={(e) => setSelectedOrder({ ...selectedOrder, orderStatus: e.target.value })}
-          />
+            InputProps={{ readOnly: true }}
+          >
+            {Object.entries(orderStatus).map(([value, label]) => (
+              <MenuItem key={value} value={value}>
+                {label}
+              </MenuItem>
+            ))}
+          </TextField>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cancelar</Button>
-          <Button onClick={handleSave} color="primary">{isEditing ? "Salvar" : "Adicionar"}</Button>
-        </DialogActions>
       </Dialog>
+
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
+        <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
 
       <Dialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)}>
   <DialogTitle>Detalhes do Pedido</DialogTitle>

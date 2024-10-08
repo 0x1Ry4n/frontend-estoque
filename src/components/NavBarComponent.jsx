@@ -58,7 +58,7 @@ export default function NavBarComponent() {
                 }}
               >
                 <Typography fontFamily={"Inter"} variant="h6">
-                  App Title
+                  Estoque
                 </Typography>
                 {/* Mover a seção do usuário e notificações para a direita */}
                 <Box

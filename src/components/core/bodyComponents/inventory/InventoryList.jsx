@@ -21,17 +21,17 @@ const Inventory = () => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
   const [isEditing, setIsEditing] = useState(false);
-  const [products, setProducts] = useState([]); // State to hold product data
+  const [products, setProducts] = useState([]); 
 
   useEffect(() => {
-    fetchInventory(); // Fetch inventory data when component mounts
+    fetchInventory(); 
   }, []);
 
   const fetchInventory = async () => {
     try {
       const response = await api.get('/products/inventory');
       setRows(response.data.content);
-      await fetchProducts(); // Fetch products after getting inventory
+      await fetchProducts(); 
     } catch (error) {
       console.error("Erro ao buscar inventário: ", error);
       setSnackbarMessage("Erro ao carregar inventário.");
@@ -42,7 +42,7 @@ const Inventory = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await api.get('/products'); // Assuming there's an endpoint for products
+      const response = await api.get('/products'); 
       setProducts(response.data.content);
     } catch (error) {
       console.error("Erro ao buscar produtos: ", error);
@@ -67,7 +67,7 @@ const Inventory = () => {
   const handleDelete = async (inventory) => {
     try {
       await api.delete(`/products/${inventory[0].productId}/inventory/${inventory[0].id}`);
-      setRows(rows.filter((row) => row.id !== inventory[0].id)); // Fix for filtering rows
+      setRows(rows.filter((row) => row.id !== inventory[0].id)); 
       setSnackbarMessage("Item de inventário deletado com sucesso!");
       setSnackbarSeverity("success");
     } catch (error) {
@@ -81,16 +81,9 @@ const Inventory = () => {
   const handleSave = async () => {
     const { productId, quantity, discount, location } = selectedInventory;
 
-    if (!productId || quantity < 0) {
-      setSnackbarMessage("Por favor, preencha todos os campos corretamente!");
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-      return;
-    }
-
     try {
       if (isEditing) {
-        await api.patch(`/inventory/${selectedInventory.id}`, { productId, quantity, discount, location });
+        await api.patch(`/products/${productId}/inventory/${selectedInventory.id}`, { productId, quantity, discount, location });
         setRows(rows.map((row) => (row.id === selectedInventory.id ? selectedInventory : row)));
         setSnackbarMessage("Item de inventário atualizado com sucesso!");
       } else {
@@ -110,7 +103,7 @@ const Inventory = () => {
   };
 
   const handleRefresh = () => {
-    fetchInventory(); // Refresh inventory list on button click
+    fetchInventory(); 
     setSnackbarMessage("Lista de inventário atualizada!");
     setSnackbarSeverity("info");
     setSnackbarOpen(true);
@@ -137,6 +130,7 @@ const Inventory = () => {
         return product ? product.unitPrice.toFixed(2) : '0.00';
       }
     },
+    { field: "originalQuantity", headerName: "Quantidade (Original)", width: 150, type: 'number' },
     { field: "quantity", headerName: "Quantidade", width: 150, type: 'number' },
     { field: "discount", headerName: "Desconto", width: 150, type: 'number' },
     {
@@ -172,7 +166,7 @@ const Inventory = () => {
       <Button 
         variant="outlined" 
         startIcon={<RefreshIcon />} 
-        onClick={handleRefresh} // Button to refresh the inventory list
+        onClick={handleRefresh} 
         sx={{ mb: 2 }}
       >
         Atualizar Lista
@@ -196,6 +190,14 @@ const Inventory = () => {
             InputProps={{ readOnly: true }} 
           />
           <TextField
+            label="Quantidade (Original)"
+            type="number"
+            fullWidth
+            margin="normal"
+            value={selectedInventory?.originalQuantity || ""}
+            onChange={(e) => setSelectedInventory({ ...selectedInventory, originalQuantity: Number(e.target.value) })}
+          />
+          <TextField
             label="Quantidade"
             type="number"
             fullWidth
@@ -208,7 +210,7 @@ const Inventory = () => {
             type="number"
             fullWidth
             margin="normal"
-            value={selectedInventory?.discount || ""}
+            value={selectedInventory?.discount || 0 }
             onChange={(e) => setSelectedInventory({ ...selectedInventory, discount: Number(e.target.value) })}
           />
           <TextField
