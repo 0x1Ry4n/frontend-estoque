@@ -28,7 +28,6 @@ const ProductForm = ({ onProductAdded }) => {
   const [categories, setCategories] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
 
-  // Snackbar states
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
@@ -52,7 +51,7 @@ const ProductForm = ({ onProductAdded }) => {
     try {
       const productData = {
         ...data,
-        unitPrice: parseFloat(data.unitPrice), // Certifique-se de que o preço é um número
+        unitPrice: parseFloat(data.unitPrice), 
       };
 
       const response = await api.post('/products', productData); 
@@ -67,7 +66,7 @@ const ProductForm = ({ onProductAdded }) => {
           console.error('onProductAdded is not a function');
         }
    
-        reset(); // Limpa o formulário após o envio
+        reset(); 
       }
     } catch (error) {
       setSnackbarMessage('Erro ao cadastrar produto: ' + (error.response?.data?.message || 'Erro desconhecido.'));
@@ -182,25 +181,23 @@ const ProductForm = ({ onProductAdded }) => {
                 name="categoryId"
                 control={control}
                 defaultValue=""
-                rules={{ required: 'A categoria é obrigatória.' }} // Adicionando a regra de validação
+                rules={{ required: 'A categoria é obrigatória.' }} 
                 render={({ field }) => (
                   <Autocomplete
                     options={categories}
                     getOptionLabel={(option) => option.name}
                     filterSelectedOptions
                     onChange={(_, value) => {
-                      // Aqui estamos passando apenas o ID da categoria selecionada
-                      field.onChange(value ? value.id : ''); // Se value for null, passamos uma string vazia
+                      field.onChange(value ? value.id : ''); 
                     }}
                     renderInput={(params) => (
                       <TextField
                         {...params}
                         variant="outlined"
-                        required
                         label="Categoria"
                         placeholder="Pesquisar categorias"
-                        error={!!errors.categoryId} // Verifica se há erro
-                        helperText={errors.categoryId ? errors.categoryId.message : ''} // Exibe a mensagem de erro
+                        error={!!errors.categoryId} 
+                        helperText={errors.categoryId ? errors.categoryId.message : ''} 
                       />
                     )}
                   />

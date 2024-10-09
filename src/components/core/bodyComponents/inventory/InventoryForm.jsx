@@ -6,7 +6,6 @@ import {
   Typography,
   Paper,
   InputAdornment,
-  FormControl,
   Grid,
   Snackbar,
   Alert,
@@ -27,7 +26,7 @@ const InventoryForm = ({ onInventoryAdded }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [openModal, setOpenModal] = useState(false);
 
-  const { control, handleSubmit, reset } = useForm({
+  const { control, handleSubmit, reset, formState: { errors } } = useForm({
     defaultValues: {
       productId: '',
       quantity: '',
@@ -79,7 +78,7 @@ const InventoryForm = ({ onInventoryAdded }) => {
   const handleScan = (data) => {
     if (data) {
       console.log(data);
-      reset({ location: data.text }); // Atualiza o campo location
+      reset({ location: data.text }); 
       setOpenModal(false);
     }
   };
@@ -113,34 +112,37 @@ const InventoryForm = ({ onInventoryAdded }) => {
         <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={4}>
             <Grid item md={6} xs={12}>
-            <Controller
-              name="productId"
-              control={control}
-              render={({ field: { onChange, value } }) => (
-                <Autocomplete
-                  options={products} 
-                  getOptionLabel={(option) => option?.name || ''} // Certifique-se de que option.name existe
-                  isOptionEqualToValue={(option, value) => option.id === value?.id} // Comparação correta do valor selecionado
-                  value={products.find((product) => product.id === value) || null} // Ajusta o valor selecionado
-                  onChange={(_, selectedOption) => onChange(selectedOption ? selectedOption.id : '')} // Garante que o ID do produto seja atualizado
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Produto"
-                      variant="outlined"
-                      required
-                      placeholder="Pesquisar Produto"
-                    />
-                  )}
-                />
-              )}
-            />
+              <Controller
+                name="productId"
+                control={control}
+                rules={{ required: 'O produto é obrigatório.' }}
+                render={({ field: { onChange, value } }) => (
+                  <Autocomplete
+                    options={products} 
+                    getOptionLabel={(option) => option?.name || ''}
+                    isOptionEqualToValue={(option, value) => option.id === value?.id}
+                    value={products.find((product) => product.id === value) || null}
+                    onChange={(_, selectedOption) => onChange(selectedOption ? selectedOption.id : '')}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Produto"
+                        variant="outlined"
+                        placeholder="Pesquisar Produto"
+                        error={!!errors.productId} // Adiciona estilo de erro
+                        helperText={errors.productId ? errors.productId.message : ''} // Exibe mensagem de erro
+                      />
+                    )}
+                  />
+                )}
+              />
             </Grid>
 
             <Grid item md={6} xs={12}>
               <Controller
                 name="quantity"
                 control={control}
+                rules={{ required: 'A quantidade é obrigatória.' }}
                 render={({ field }) => (
                   <TextField
                     {...field}
@@ -148,7 +150,8 @@ const InventoryForm = ({ onInventoryAdded }) => {
                     fullWidth
                     variant="outlined"
                     type="number"
-                    required
+                    error={!!errors.quantity} // Adiciona estilo de erro
+                    helperText={errors.quantity ? errors.quantity.message : ''} // Exibe mensagem de erro
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
@@ -168,6 +171,7 @@ const InventoryForm = ({ onInventoryAdded }) => {
               <Controller
                 name="discount"
                 control={control}
+                rules={{ required: 'O desconto é obrigatório (0 ou mais).' }}
                 render={({ field }) => (
                   <TextField
                     {...field}
@@ -175,6 +179,8 @@ const InventoryForm = ({ onInventoryAdded }) => {
                     fullWidth
                     variant="outlined"
                     type="number"
+                    error={!!errors.discount} // Adiciona estilo de erro
+                    helperText={errors.discount ? errors.discount.message : ''} // Exibe mensagem de erro
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
@@ -193,14 +199,16 @@ const InventoryForm = ({ onInventoryAdded }) => {
             <Grid item md={6} xs={12}>
               <Controller
                 name="location"
+                rules={{ required: 'O código de localização é obrigatório.' }}
                 control={control}
                 render={({ field }) => (
                   <TextField
                     {...field}
                     label="Localização"
                     fullWidth
-                    required
                     variant="outlined"
+                    error={!!errors.location} // Adiciona estilo de erro
+                    helperText={errors.location ? errors.location.message : ''} // Exibe mensagem de erro
                     InputLabelProps={{
                       shrink: true,
                     }}

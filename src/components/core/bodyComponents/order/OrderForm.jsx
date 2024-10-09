@@ -16,18 +16,14 @@ import {
 } from '@mui/material';
 import { AddCircleOutline } from '@mui/icons-material';
 import api from './../../../../api';
+import { useForm, Controller } from 'react-hook-form';
 
 const OrderForm = ({ onOrderAdded }) => {
-  const [customerId, setCustomerId] = useState(null);
-  const [productId, setProductId] = useState(null);
-  const [inventoryId, setInventoryId] = useState(null);
-  const [quantity, setQuantity] = useState(1);
-  const [paymentMethod, setPaymentMethod] = useState('CREDIT_CARD');
-  const [status, setStatus] = useState('DELIVERED');
+  const { control, handleSubmit, setValue, getValues, reset } = useForm();
+  const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
   const [inventories, setInventories] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -63,18 +59,17 @@ const OrderForm = ({ onOrderAdded }) => {
 
   const handleProductChange = async (event, newValue) => {
     if (newValue) {
-      setProductId(newValue); // O novo valor é o objeto do produto
-      setInventoryId(null); // Reset inventory when changing product
+      setValue('productId', newValue); // O novo valor é o objeto do produto
+      setValue('inventoryId', null); // Reset inventory when changing product
 
       try {
-        // Use newValue.id para acessar o id do produto
         const response = await api.get(`/products/${newValue.id}/inventory`);
         if (Array.isArray(response.data)) {
           setInventories(response.data);
           if (response.data.length > 0) {
-            setInventoryId(response.data[0]); // Seleciona o primeiro inventário
+            setValue('inventoryId', response.data[0]); // Seleciona o primeiro inventário
           } else {
-            setInventoryId(null); // Nenhum inventário disponível
+            setValue('inventoryId', null); // Nenhum inventário disponível
           }
         } else {
           setInventories([]); // Se não for uma lista, reseta
@@ -86,21 +81,19 @@ const OrderForm = ({ onOrderAdded }) => {
     }
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    if (quantity <= 0) {
+  const onSubmit = async (data) => {
+    if (data.quantity <= 0) {
       setErrorMessage('A quantidade deve ser maior que zero.');
       return;
     }
 
     const orderData = {
-      customerId: customerId?.id,
-      productId: productId?.id,
-      inventoryId: inventoryId?.id,
-      quantity,
-      paymentMethod,
-      status,
+      customerId: data.customerId?.id,
+      productId: data.productId?.id,
+      inventoryId: data.inventoryId?.id,
+      quantity: data.quantity,
+      paymentMethod: data.paymentMethod,
+      status: data.status,
     };
 
     try {
@@ -110,12 +103,7 @@ const OrderForm = ({ onOrderAdded }) => {
         if (typeof onOrderAdded === 'function') {
           onOrderAdded(response.data.content);
         }
-        setCustomerId(null);
-        setProductId(null);
-        setInventoryId(null);
-        setQuantity(1);
-        setPaymentMethod('CREDIT_CARD'); // Reset to default value
-        setStatus('DELIVERED'); // Reset to default value
+        reset(); // Reset form fields
         setInventories([]);
       }
     } catch (error) {
@@ -135,92 +123,128 @@ const OrderForm = ({ onOrderAdded }) => {
           <AddCircleOutline sx={{ mr: 1 }} />
           Cadastrar Pedido
         </Typography>
-        <Box component="form" onSubmit={handleSubmit}>
+        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           {loading && <CircularProgress />}
           <Grid container spacing={4}>
             <Grid item md={6}>
-              <Autocomplete
-                value={customerId}
-                onChange={(event, newValue) => setCustomerId(newValue)}
-                options={customers}
-                getOptionLabel={(option) => option.fullname || ''}
-                renderInput={(params) => (
-                  <TextField {...params} label="Cliente" variant="outlined" required />
+              <Controller
+                name="customerId"
+                control={control}
+                render={({ field }) => (
+                  <Autocomplete
+                    {...field}
+                    options={customers}
+                    getOptionLabel={(option) => option.fullname || ''}
+                    onChange={(event, newValue) => {
+                      field.onChange(newValue);
+                    }}
+                    renderInput={(params) => (
+                      <TextField {...params} label="Cliente" variant="outlined" required />
+                    )}
+                  />
                 )}
               />
             </Grid>
             <Grid item md={6}>
-              <Autocomplete
-                value={productId}
-                onChange={handleProductChange}
-                options={products}
-                getOptionLabel={(option) => option.name || ''}
-                renderInput={(params) => (
-                  <TextField {...params} label="Produto" variant="outlined" required />
+              <Controller
+                name="productId"
+                control={control}
+                render={({ field }) => (
+                  <Autocomplete
+                    {...field}
+                    options={products}
+                    getOptionLabel={(option) => option.name || ''}
+                    onChange={(event, newValue) => {
+                      handleProductChange(event, newValue);
+                      field.onChange(newValue);
+                    }}
+                    renderInput={(params) => (
+                      <TextField {...params} label="Produto" variant="outlined" required />
+                    )}
+                  />
                 )}
               />
             </Grid>
 
             <Grid item md={6}>
-              <Autocomplete
-                value={inventoryId}
-                onChange={(event, newValue) => setInventoryId(newValue)}
-                options={inventories}
-                getOptionLabel={(option) =>
-                  `${option.location} (${option.quantity} disponíveis)`
-                }
-                renderInput={(params) => (
-                  <TextField {...params} label="Inventário" variant="outlined" required />
+              <Controller
+                name="inventoryId"
+                control={control}
+                render={({ field }) => (
+                  <Autocomplete
+                    {...field}
+                    options={inventories}
+                    getOptionLabel={(option) =>
+                      `${option.location} (${option.quantity} disponíveis)`
+                    }
+                    onChange={(event, newValue) => {
+                      field.onChange(newValue);
+                    }}
+                    renderInput={(params) => (
+                      <TextField {...params} label="Inventário" variant="outlined" required />
+                    )}
+                    disabled={!getValues('productId')} // Disable if no product is selected
+                  />
                 )}
-                disabled={!productId} // Disable if no product is selected
               />
             </Grid>
 
             <Grid item md={6}>
-              <TextField
-                label="Quantidade"
-                type="number"
-                fullWidth
-                variant="outlined"
-                value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
-                required
-                InputLabelProps={{
-                  shrink: true,
-                }}
+              <Controller
+                name="quantity"
+                control={control}
+                defaultValue={1}
+                render={({ field }) => (
+                  <TextField
+                    label="Quantidade"
+                    type="number"
+                    fullWidth
+                    variant="outlined"
+                    {...field}
+                    required
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
+                )}
               />
             </Grid>
 
             <Grid item md={6}>
               <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
                 <Typography variant="subtitle1" sx={{ mb: 1 }}>Método de Pagamento</Typography>
-                <Select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  variant="outlined"
-                  required
-                >
-                  <MenuItem value="CREDIT_CARD">Cartão de Crédito</MenuItem>
-                  <MenuItem value="DEBIT_CARD">Cartão de Débito</MenuItem>
-                  <MenuItem value="MONEY">Dinheiro</MenuItem>
-                  <MenuItem value="ANY">Qualquer um</MenuItem>
-                </Select>
+                <Controller
+                  name="paymentMethod"
+                  control={control}
+                  defaultValue="CREDIT_CARD"
+                  render={({ field }) => (
+                    <Select {...field} variant="outlined" required>
+                      <MenuItem value="CREDIT_CARD">Cartão de Crédito</MenuItem>
+                      <MenuItem value="DEBIT_CARD">Cartão de Débito</MenuItem>
+                      <MenuItem value="MONEY">Dinheiro</MenuItem>
+                      <MenuItem value="ANY">Qualquer um</MenuItem>
+                    </Select>
+                  )}
+                />
               </FormControl>
             </Grid>
 
             <Grid item md={6}>
               <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
                 <Typography variant="subtitle1" sx={{ mb: 1 }}>Status de Entrega</Typography>
-                <Select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  variant="outlined"
-                  required
-                >
-                  <MenuItem value="PENDING">Pendente</MenuItem>
-                  <MenuItem value="IN_PROGRESS">Em Progresso</MenuItem>
-                  <MenuItem value="DELIVERED">Entregue</MenuItem>
-                </Select>
+                <Controller
+                  name="status"
+                  control={control}
+                  defaultValue="DELIVERED"
+                  render={({ field }) => (
+                    <Select {...field} variant="outlined" required>
+                      <MenuItem value="PENDING">Pendente</MenuItem>
+                      <MenuItem value="IN_PROGRESS">Em Progresso</MenuItem>
+                      <MenuItem value="DELIVERED">Entregue</MenuItem>
+                    </Select>
+                  )}
+                />
               </FormControl>
             </Grid>
           </Grid>
