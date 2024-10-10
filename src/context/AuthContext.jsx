@@ -23,11 +23,17 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { token } = response.data;
 
-      setToken(token);
-      localStorage.setItem('token', token);
-      setAuthToken(token);
+      if (response.status == 200) {
+        const { token } = response.data;
+        setToken(token);
+        localStorage.setItem('token', token);
+        setAuthToken(token);
+
+        return true;
+      } else {
+        return false;
+      } 
     } catch (error) {
       console.error("Erro ao fazer login: ", error);
     }

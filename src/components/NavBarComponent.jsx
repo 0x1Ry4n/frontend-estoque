@@ -20,18 +20,36 @@ import {
   Logout,
   AccountCircleOutlined,
 } from "@mui/icons-material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import api from '../api'; // Substitua pelo caminho correto da sua API
 
 export default function NavBarComponent() {
   const [notificationAnchorEl, setNotificationAnchorEl] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [user, setUser] = useState(null); // Estado para armazenar o usuário
   const open = Boolean(anchorEl);
   const notificationOpen = Boolean(notificationAnchorEl);
-  
+  const navigate = useNavigate();
+
+  // Função para buscar os dados do usuário
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await api.get('/auth/me'); // Endpoint para buscar o usuário autenticado
+        setUser(response.data); // Define os dados do usuário
+      } catch (error) {
+        console.error("Erro ao buscar os dados do usuário:", error);
+      }
+    };
+
+    fetchUser(); // Chama a função ao carregar o componente
+  }, []);
+
   const handleAvatarClicked = (event) => {
     setAnchorEl(event.currentTarget);
   };
-  
+
   const handleNotificationClicked = (event) => {
     setNotificationAnchorEl(event.currentTarget);
   };
@@ -39,9 +57,15 @@ export default function NavBarComponent() {
   const handleClose = () => {
     setAnchorEl(null);
   };
-  
+
   const notificationHandleClose = () => {
     setNotificationAnchorEl(null);
+  };
+
+  // Função para lidar com o clique em "Profile"
+  const handleProfileClick = () => {
+    handleClose();
+    navigate('/user'); // Redireciona para a página de perfil
   };
 
   return (
@@ -94,10 +118,11 @@ export default function NavBarComponent() {
                     aria-haspopup="true"
                   >
                     <Tooltip title="account settings">
-                      <Avatar sx={{ width: 32, height: 32 }}>Z</Avatar>
+                      <Avatar sx={{ width: 32, height: 32 }}>{user?.username?.charAt(0).toUpperCase()}</Avatar>
                     </Tooltip>
                   </IconButton>
-                  <Typography fontFamily={"Inter"}>ADMI ZAKARYAE</Typography>
+                  {/* Exibir o email do usuário ou um texto de fallback */}
+                  <Typography fontFamily={"Inter"}>{user?.email || "Carregando..."}</Typography>
                 </Box>
 
                 <Menu
@@ -106,7 +131,7 @@ export default function NavBarComponent() {
                   onClick={handleClose}
                   onClose={handleClose}
                 >
-                  <MenuItem>
+                  <MenuItem onClick={handleProfileClick}> 
                     <ListItemIcon>
                       <AccountCircleOutlined fontSize="small" />
                     </ListItemIcon>
@@ -119,12 +144,6 @@ export default function NavBarComponent() {
                       <Settings fontSize="small" />
                     </ListItemIcon>
                     Settings
-                  </MenuItem>
-                  <MenuItem>
-                    <ListItemIcon>
-                      <Logout fontSize="small" />
-                    </ListItemIcon>
-                    Logout
                   </MenuItem>
                 </Menu>
               </Box>

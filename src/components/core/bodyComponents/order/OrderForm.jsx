@@ -19,7 +19,7 @@ import api from './../../../../api';
 import { useForm, Controller } from 'react-hook-form';
 
 const OrderForm = ({ onOrderAdded }) => {
-  const { control, handleSubmit, setValue, getValues, reset } = useForm();
+  const { control, handleSubmit, setValue, getValues, reset, formState: { errors } } = useForm();
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
@@ -103,7 +103,7 @@ const OrderForm = ({ onOrderAdded }) => {
         if (typeof onOrderAdded === 'function') {
           onOrderAdded(response.data.content);
         }
-        reset(); // Reset form fields
+        reset(); 
         setInventories([]);
       }
     } catch (error) {
@@ -127,88 +127,104 @@ const OrderForm = ({ onOrderAdded }) => {
           {loading && <CircularProgress />}
           <Grid container spacing={4}>
             <Grid item md={6}>
-              <Controller
-                name="customerId"
-                control={control}
-                render={({ field }) => (
-                  <Autocomplete
-                    {...field}
-                    options={customers}
-                    getOptionLabel={(option) => option.fullname || ''}
-                    onChange={(event, newValue) => {
-                      field.onChange(newValue);
-                    }}
-                    renderInput={(params) => (
-                      <TextField {...params} label="Cliente" variant="outlined" required />
-                    )}
-                  />
-                )}
-              />
+            <Controller
+              name="customerId"
+              control={control}
+              rules={{ required: 'O cliente é obrigatório.' }}
+              render={({ field }) => (
+                <Autocomplete
+                  {...field}
+                  options={customers}
+                  getOptionLabel={(option) => option.fullname || ''}
+                  onChange={(event, newValue) => {
+                    field.onChange(newValue);
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Cliente"
+                      variant="outlined"
+                      error={!!errors.customerId} 
+                      helperText={errors.customerId ? errors.customerId.message : ''} 
+                    />
+                  )}
+                />
+              )}
+            />
             </Grid>
             <Grid item md={6}>
-              <Controller
-                name="productId"
-                control={control}
-                render={({ field }) => (
-                  <Autocomplete
-                    {...field}
-                    options={products}
-                    getOptionLabel={(option) => option.name || ''}
-                    onChange={(event, newValue) => {
-                      handleProductChange(event, newValue);
-                      field.onChange(newValue);
-                    }}
-                    renderInput={(params) => (
-                      <TextField {...params} label="Produto" variant="outlined" required />
-                    )}
-                  />
-                )}
-              />
-            </Grid>
-
-            <Grid item md={6}>
-              <Controller
-                name="inventoryId"
-                control={control}
-                render={({ field }) => (
-                  <Autocomplete
-                    {...field}
-                    options={inventories}
-                    getOptionLabel={(option) =>
-                      `${option.location} (${option.quantity} disponíveis)`
-                    }
-                    onChange={(event, newValue) => {
-                      field.onChange(newValue);
-                    }}
-                    renderInput={(params) => (
-                      <TextField {...params} label="Inventário" variant="outlined" required />
-                    )}
-                    disabled={!getValues('productId')} // Disable if no product is selected
-                  />
-                )}
-              />
+            <Controller
+              name="productId"
+              control={control}
+              rules={{ required: 'O produto é obrigatório.' }}
+              render={({ field }) => (
+                <Autocomplete
+                  {...field}
+                  options={products}
+                  getOptionLabel={(option) => option.name || ''}
+                  onChange={(event, newValue) => {
+                    handleProductChange(event, newValue);
+                    field.onChange(newValue);
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Produto"
+                      variant="outlined"
+                      error={!!errors.productId} 
+                      helperText={errors.productId ? errors.productId.message : ''} 
+                    />
+                  )}
+                />
+              )}
+            />
             </Grid>
 
             <Grid item md={6}>
-              <Controller
-                name="quantity"
-                control={control}
-                defaultValue={1}
-                render={({ field }) => (
-                  <TextField
-                    label="Quantidade"
-                    type="number"
-                    fullWidth
-                    variant="outlined"
-                    {...field}
-                    required
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
-                )}
-              />
+            <Controller
+              name="inventoryId"
+              control={control}
+              rules={{ required: 'O inventário é obrigatório.' }}
+              render={({ field }) => (
+                <Autocomplete
+                  {...field}
+                  options={inventories}
+                  getOptionLabel={(option) => `${option.location} (${option.quantity} disponíveis)`}
+                  onChange={(event, newValue) => {
+                    field.onChange(newValue);
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Inventário"
+                      variant="outlined"
+                      error={!!errors.inventoryId} 
+                      helperText={errors.inventoryId ? errors.inventoryId.message : ''} 
+                    />
+                  )}
+                  disabled={!getValues('productId')} 
+                />
+              )}
+            />
+            </Grid>
+
+            <Grid item md={6}>
+            <Controller
+              name="quantity"
+              control={control}
+              rules={{ required: 'A quantidade é obrigatória.', min: { value: 1, message: 'A quantidade deve ser maior que zero.' }}}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Quantidade"
+                  type="number"
+                  fullWidth
+                  variant="outlined"
+                  error={!!errors.quantity} 
+                  helperText={errors.quantity ? errors.quantity.message : ''} 
+                />
+              )}
+            />
             </Grid>
 
             <Grid item md={6}>

@@ -22,6 +22,7 @@ import {
   CategoryOutlined,
   ListAltOutlined,
   OutboxOutlined,
+  AccountCircleOutlined,
   ExpandMore,
   ExpandLess,
 } from "@mui/icons-material";
@@ -40,6 +41,7 @@ export default function SideBarComponent() {
     { title: "Produtos", route: "products", component: <ListAltOutlined /> },
     { title: "Inventário", route: "inventory", component: <Inventory2Outlined /> },
     { title: "Saídas", route: "orders", component: <CardTravelOutlined /> },
+    { title: "Criar Usuário", route: "create-user", component: <AccountCircleOutlined /> }, 
     { title: "Receita", route: "revenue", component: <MonetizationOnOutlined /> },
     { title: "Crescimento", route: "growth", component: <TrendingUpOutlined /> },
     { title: "Relatórios", route: "qrcode-generator", component: <DescriptionOutlined /> },

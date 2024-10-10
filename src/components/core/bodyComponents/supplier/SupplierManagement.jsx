@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import SupplierForm from './SupplierForm'; // Componente do formulário de fornecedores
-import Suppliers from './SupplierList'; // Componente da lista de fornecedores
+import SupplierForm from './SupplierForm'; 
+import Suppliers from './SupplierList'; 
 import { Box, Typography } from '@mui/material';
 
 const SupplierManagement = () => {

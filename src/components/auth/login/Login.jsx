@@ -11,11 +11,11 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { Email, Lock } from '@mui/icons-material';
 import LoginIcon from '@mui/icons-material/Login';
-import { useAuth } from '../../../context/AuthContext'; 
+import { useAuth } from '../../../context/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth(); 
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -27,10 +27,19 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      await login(email, password); 
-      navigate('/home');
+      const isAuthenticated = await login(email, password);
+
+      if (isAuthenticated) {
+        navigate('/home');
+      } else {
+        setError('Credenciais inválidas. Verifique seu e-mail e senha.');
+      }
     } catch (err) {
-      setError('Login failed. Please check your email and password.');
+      if (err.response && err.response.status === 401) {
+        setError('Credenciais inválidas. Verifique seu e-mail e senha.');
+      } else {
+        setError('Ocorreu um erro ao tentar entrar. Tente novamente mais tarde.');
+      }
     }
   };
 
@@ -108,13 +117,6 @@ const Login = () => {
             Entrar
           </Button>
         </form>
-
-        <Typography textAlign="center" mt={3} color="#00796b">
-          Ainda não tem uma conta?{' '}
-          <Link href="/register" underline="hover" color="#00796b">
-            Registre-se aqui
-          </Link>
-        </Typography>
       </Box>
     </Box>
   );

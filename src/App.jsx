@@ -6,6 +6,7 @@ import {
   createBrowserRouter,
   createRoutesFromElements,
   RouterProvider,
+  Navigate,
 } from "react-router-dom";
 import Home from "./components/core/bodyComponents/home/Home";
 import Revenue from "./components/core/bodyComponents/revenue/Revenue";
@@ -21,6 +22,9 @@ import SupplierManagement from "./components/core/bodyComponents/supplier/Suppli
 import InventoryManagement from "./components/core/bodyComponents/inventory/InventoryManagement";
 import OrderManagement from "./components/core/bodyComponents/order/OrderManagement";
 import QRCodeGenerator from "./components/core/bodyComponents/qrcode/QRCodeGenerator";
+import UserProfile from "./components/core/bodyComponents/user/UserProfile";
+import CreateUser from "./components/core/bodyComponents/user/CreateUser";
+import UserManagement from "./components/core/bodyComponents/user/UserManagement";
 
 function App() {
   const theme = createTheme({
@@ -47,22 +51,32 @@ function App() {
     },
   });
 
+  // Função que retorna o status de autenticação
+  const isAuthenticated = () => {
+    return localStorage.getItem('token'); 
+  };
+
   const router = createBrowserRouter(
     createRoutesFromElements(
-      <Route path="/" element={<RootComponent />}>
+      <Route>
         <Route path="/login" element={<Login />} />
-        <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
-        <Route path="/categories" element={<PrivateRoute><CategoryManagement /></PrivateRoute>} />
-        <Route path="/suppliers" element={<PrivateRoute><SupplierManagement /></PrivateRoute>} />
-        <Route path="/products" element={<PrivateRoute><ProductManagement /></PrivateRoute>} />
-        <Route path="/inventory" element={<PrivateRoute><InventoryManagement /></PrivateRoute>} />
-        <Route path="/orders" element={<PrivateRoute><OrderManagement /></PrivateRoute>} />
-        <Route path="/customers" element={<PrivateRoute><CustomerManagement /></PrivateRoute>} />
-        <Route path="/revenue" element={<PrivateRoute><Revenue /></PrivateRoute>} />
-        <Route path="/growth" element={<PrivateRoute><Growth /></PrivateRoute>} />
-        <Route path="/reports" element={<PrivateRoute><Report /></PrivateRoute>} />
-        <Route path="/settings" element={<PrivateRoute><Setting /></PrivateRoute>} />
-        <Route path="/qrcode-generator" element={<PrivateRoute><QRCodeGenerator /></PrivateRoute>} />
+        <Route path="/" element={<Navigate to={isAuthenticated() ? "/home" : "/login"} />} />
+        <Route path="/" element={<PrivateRoute><RootComponent /></PrivateRoute>}>
+          <Route path="/home" element={<Home />} />
+          <Route path="/user" element={<UserProfile />} />
+          <Route path="/create-user" element={<UserManagement />} /> 
+          <Route path="/categories" element={<CategoryManagement />} />
+          <Route path="/suppliers" element={<SupplierManagement />} />
+          <Route path="/products" element={<ProductManagement />} />
+          <Route path="/inventory" element={<InventoryManagement />} />
+          <Route path="/orders" element={<OrderManagement />} />
+          <Route path="/customers" element={<CustomerManagement />} />
+          <Route path="/revenue" element={<Revenue />} />
+          <Route path="/growth" element={<Growth />} />
+          <Route path="/reports" element={<Report />} />
+          <Route path="/settings" element={<Setting />} />
+          <Route path="/qrcode-generator" element={<QRCodeGenerator />} />
+        </Route>
       </Route>
     )
   );
