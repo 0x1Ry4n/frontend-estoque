@@ -15,7 +15,7 @@ export default function TotalSales({ orders }) {
 
   const options = {
     title: {
-      text: "Total Sales",
+      text: "Vendas totais",
       align: "left",
       style: {
         fontSize: "16px",
@@ -23,7 +23,7 @@ export default function TotalSales({ orders }) {
       },
     },
     subtitle: {
-      text: "Sales over time",
+      text: "Vendas ao longo do tempo",
       align: "left",
       style: {
         fontSize: "16px",
@@ -72,7 +72,7 @@ export default function TotalSales({ orders }) {
 
   const series = [
     {
-      name: "Number of Sales",
+      name: "Num. Vendas",
       data: quantities, // Usando as quantidades contadas
     },
   ];

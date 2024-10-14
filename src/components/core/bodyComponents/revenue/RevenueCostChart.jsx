@@ -40,12 +40,12 @@ export default function RevenueCostChart() {
 
         setChannelData([
           {
-            name: "Revenue",
+            name: "Receita",
             type: "column",
             data: revenueData, // Dados organizados por mês
           },
           {
-            name: "Cost",
+            name: "Custos",
             type: "column",
             data: costData, // Dados organizados por mês
           },
@@ -78,7 +78,7 @@ export default function RevenueCostChart() {
       offsetY: 0,
     },
     title: {
-      text: "Cost & Revenue over Year",
+      text: "Receita e Custos neste ano",
     },
     plotOptions: {
       bar: {
@@ -91,8 +91,8 @@ export default function RevenueCostChart() {
     },
     xaxis: {
       categories: [
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+        "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+        "Jul", "Ago", "Set", "Out", "Nov", "Dez",
       ], // Mapeando para meses
     },
     tooltip: {

@@ -8,10 +8,6 @@ export default function Channels({ orders }) {
   useEffect(() => {
     const channels = {
       "Online Store": [],
-      "Amazon Marketplace": [],
-      "eBay Marketplace": [],
-      "Physical Store": [],
-      "Distributors": [],
     };
 
     orders.forEach(order => {
@@ -43,7 +39,7 @@ export default function Channels({ orders }) {
       offsetY: 0,
     },
     title: {
-      text: "Sales By Channel",
+      text: "Vendas por Setor",
     },
     plotOptions: {
       bar: {
@@ -55,7 +51,7 @@ export default function Channels({ orders }) {
       opacity: 1,
     },
     xaxis: {
-      categories: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], 
+      categories: ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"], 
     },
   };
 

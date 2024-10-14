@@ -33,7 +33,7 @@ export default function SalesDataChart() {
         // Organizar os dados para as séries e categorias do gráfico
         const salesSeries = [
           {
-            name: "Quantity Sold",
+            name: "Quantidade Vendida",
             data: Object.values(productSales),
           },
         ];
@@ -60,7 +60,7 @@ export default function SalesDataChart() {
       categories: categories,
     },
     title: {
-      text: "Total Quantity Sold Per Product",
+      text: "Quantidade vendida por Produto",
     },
     tooltip: {
       y: {

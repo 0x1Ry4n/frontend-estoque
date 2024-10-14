@@ -37,7 +37,7 @@ export default function ProductsGrowthCharts() {
       offsetY: 0,
     },
     title: {
-      text: "Product Growth",
+      text: "Crescimento de Produto",
     },
 
     stroke: {
@@ -56,7 +56,7 @@ export default function ProductsGrowthCharts() {
       opacity: 1,
     },
     xaxis: {
-      categories: ["Mon", "Thu", "Web", "Tue", "Fri", "Sat", "Sun"],
+      categories: ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"],
     },
     tooltip: {
       fixed: {

@@ -47,16 +47,16 @@ export default function TopSellingProducts({ orders }) {
       }}
     >
       <Typography variant="h6" fontWeight={"bold"} sx={{ mx: 3 }}>
-        Top Selling Products
+        Produtos mais vendidos
       </Typography>
       <TableContainer>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: "bolder" }}>Name</TableCell>
-              <TableCell sx={{ fontWeight: "bolder" }}>Price</TableCell>
-              <TableCell sx={{ fontWeight: "bolder" }}>Quantity</TableCell>
-              <TableCell sx={{ fontWeight: "bolder" }}>Amount</TableCell>
+              <TableCell sx={{ fontWeight: "bolder" }}>Nome Produto</TableCell>
+              <TableCell sx={{ fontWeight: "bolder" }}>Preço Unitário</TableCell>
+              <TableCell sx={{ fontWeight: "bolder" }}>Quantidade</TableCell>
+              <TableCell sx={{ fontWeight: "bolder" }}>Valor Total</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

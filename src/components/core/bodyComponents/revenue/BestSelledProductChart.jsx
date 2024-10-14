@@ -58,7 +58,7 @@ export default function BestSelledProductChart() {
       offsetY: 0,
     },
     title: {
-      text: "Top 5 Selled Products Last Week",
+      text: "Top 5 Produtos Vendidas na última semana",
     },
     plotOptions: {
       bar: {
@@ -81,7 +81,7 @@ export default function BestSelledProductChart() {
       opacity: 1,
     },
     xaxis: {
-      categories: ["Mon", "Thu", "Wed", "Tue", "Fri", "Sat", "Sun"], // Dias da semana como categorias no eixo X
+      categories: ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"], // Dias da semana como categorias no eixo X
     },
     tooltip: {
       fixed: {

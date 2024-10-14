@@ -31,7 +31,7 @@ export default function SalesByProduct({ orders }) {
       fontSize: "14",
     },
     title: {
-      text: "Sales By Product",
+      text: "Vendas por Produto",
     },
   };
 

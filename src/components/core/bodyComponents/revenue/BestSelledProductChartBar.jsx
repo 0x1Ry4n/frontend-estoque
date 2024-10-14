@@ -62,7 +62,7 @@ export default function BestSelledProductChart() {
       offsetY: 0,
     },
     title: {
-      text: "Top 5 Selled Products Over the Year",
+      text: "Top 5 Produtos Vendidos neste ano",
     },
     plotOptions: {
       bar: {

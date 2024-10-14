@@ -23,8 +23,10 @@ import InventoryManagement from "./components/core/bodyComponents/inventory/Inve
 import OrderManagement from "./components/core/bodyComponents/order/OrderManagement";
 import QRCodeGenerator from "./components/core/bodyComponents/qrcode/QRCodeGenerator";
 import UserProfile from "./components/core/bodyComponents/user/UserProfile";
-import CreateUser from "./components/core/bodyComponents/user/CreateUser";
 import UserManagement from "./components/core/bodyComponents/user/UserManagement";
+import CalendarWithNotes from "./components/core/bodyComponents/calendar/CalendarWithNotes";
+import MapComponent from "./components/core/bodyComponents/maps/Maps";
+import 'leaflet/dist/leaflet.css';
 
 function App() {
   const theme = createTheme({
@@ -51,7 +53,6 @@ function App() {
     },
   });
 
-  // Função que retorna o status de autenticação
   const isAuthenticated = () => {
     return localStorage.getItem('token'); 
   };
@@ -63,6 +64,8 @@ function App() {
         <Route path="/" element={<Navigate to={isAuthenticated() ? "/home" : "/login"} />} />
         <Route path="/" element={<PrivateRoute><RootComponent /></PrivateRoute>}>
           <Route path="/home" element={<Home />} />
+          <Route path="/calendar" element={<CalendarWithNotes />} />
+          <Route path="/maps" element={<MapComponent />} />
           <Route path="/user" element={<UserProfile />} />
           <Route path="/create-user" element={<UserManagement />} /> 
           <Route path="/categories" element={<CategoryManagement />} />

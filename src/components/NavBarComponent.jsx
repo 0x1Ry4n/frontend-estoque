@@ -135,7 +135,7 @@ export default function NavBarComponent() {
                     <ListItemIcon>
                       <AccountCircleOutlined fontSize="small" />
                     </ListItemIcon>
-                    Profile
+                    Perfil
                   </MenuItem>
                   <Divider />
 
@@ -143,7 +143,7 @@ export default function NavBarComponent() {
                     <ListItemIcon>
                       <Settings fontSize="small" />
                     </ListItemIcon>
-                    Settings
+                    Configurações
                   </MenuItem>
                 </Menu>
               </Box>

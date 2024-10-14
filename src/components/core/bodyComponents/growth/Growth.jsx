@@ -1,9 +1,8 @@
 import React, { Component } from "react";
 import { Box, Grid, Paper } from "@mui/material";
 import RevenueCard from "../revenue/RevenueCard";
-import VisitorsGrowthCharts from "./VisitorsGrowthCharts";
+import VisitorsGrowthCharts from "./CustomersGrowthCharts";
 import ProductsGrowthCharts from "./ProductsGrowthCharts";
-import CustomersGrowthCharts from "./CustomersGrowthCharts";
 import SalesGrowthCharts from "./SalesGrowthCharts";
 export default class Growth extends Component {
   render() {
@@ -14,7 +13,7 @@ export default class Growth extends Component {
         percentage: 11,
         upOrDown: "down",
         color: "red",
-        title: "Orders Per Month",
+        title: "Pedidos por Mês",
         subTitle: "vs prev month",
       },
       {
@@ -23,7 +22,7 @@ export default class Growth extends Component {
         percentage: 35,
         upOrDown: "up",
         color: "green",
-        title: "Total Customer",
+        title: "Total de Clientes",
         subTitle: "vs prev year",
       },
       {
@@ -32,14 +31,14 @@ export default class Growth extends Component {
         percentage: 10,
         upOrDown: "up",
         color: "green",
-        title: "Total Product",
+        title: "Total de Produtos",
         subTitle: "vs prev month",
       },
       {
         isMoney: false,
         number: "1200",
         percentage: "30",
-        title: "Total Visitors",
+        title: "Total de Fornecedores",
         color: "green",
         subTitle: "vs prev week",
       },
@@ -66,9 +65,6 @@ export default class Growth extends Component {
         <Grid container sx={{ mx: 4 }}>
           <Grid item md={6}>
             <ProductsGrowthCharts />
-          </Grid>
-          <Grid item md={6}>
-            <CustomersGrowthCharts />
           </Grid>
         </Grid>
       </Box>

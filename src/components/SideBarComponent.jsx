@@ -24,7 +24,9 @@ import {
   OutboxOutlined,
   AccountCircleOutlined,
   ExpandMore,
+  CalendarMonth,
   ExpandLess,
+  MapRounded,
 } from "@mui/icons-material";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -35,6 +37,8 @@ export default function SideBarComponent() {
 
   const sideBarComponent = [
     { title: "Home", route: "home", component: <HomeOutlined /> },
+    { title: "Calendário", route: "calendar", component: <CalendarMonth /> },
+    { title: "Mapa", route: "maps", component: <MapRounded /> },
     { title: "Fornecedores", route: "suppliers", component: <OutboxOutlined /> },
     { title: "Clientes", route: "customers", component: <PeopleAltOutlined /> },
     { title: "Categorias", route: "categories", component: <CategoryOutlined /> },
