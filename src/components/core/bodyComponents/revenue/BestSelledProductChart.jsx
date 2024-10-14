@@ -1,43 +1,53 @@
 import React, { useEffect, useState } from "react";
 import ApexCharts from "react-apexcharts";
 import { Box } from "@mui/material";
+import api from '../../../../api'; // Certifique-se de ajustar a importação de seu serviço API
 
 export default function BestSelledProductChart() {
   const [channelData, setChannelData] = useState([]);
 
   useEffect(() => {
-    setChannelData([
-      {
-        name: "product 1",
-        data: [14, 25, 20, 20, 30, 99],
-      },
-      {
-        name: "product 2",
-        data: [99, 94, 21, 70, 10, 54],
-      },
-      {
-        name: "product 3",
-        data: [41, 53, 41, 66, 20, 12],
-      },
-      {
-        name: "product 4",
-        data: [59, 51, 12, 5, 40, 27],
-      },
-      {
-        name: "product 5",
-        data: [67, 62, 69, 35, 86, 69],
-      },
-    ]);
+    const fetchBestSellingProducts = async () => {
+      try {
+        const response = await api.get('/orders/details'); // Ajuste conforme a rota correta
+        const orders = response.data.content;
 
-    return () => {
-      setChannelData([]);
+        // Exemplo de como processar os dados dos produtos mais vendidos
+        const productSales = {};
+
+        orders.forEach(order => {
+          const productName = order.inventory.productName;
+          const quantity = order.quantity;
+
+          // Somar as quantidades vendidas de cada produto
+          if (productSales[productName]) {
+            productSales[productName] += quantity;
+          } else {
+            productSales[productName] = quantity;
+          }
+        });
+
+        // Organize os dados para serem utilizados no gráfico
+        const chartData = Object.keys(productSales).map(product => ({
+          name: product,
+          data: [productSales[product]], // Agrupar as quantidades vendidas de cada produto
+        }));
+
+        setChannelData(chartData);
+      } catch (error) {
+        console.error("Erro ao buscar dados da API", error);
+      }
     };
+
+    fetchBestSellingProducts();
   }, []);
 
+  // Configuração do gráfico com barras empilhadas
   const options3 = {
     chart: {
       id: "basic-bar",
       type: "bar",
+      stacked: true, // Configuração para barras empilhadas
     },
     dataLabels: {
       enabled: false,
@@ -48,7 +58,7 @@ export default function BestSelledProductChart() {
       offsetY: 0,
     },
     title: {
-      text: "Top 5 Selled Product last Week",
+      text: "Top 5 Selled Products Last Week",
     },
     plotOptions: {
       bar: {
@@ -71,7 +81,7 @@ export default function BestSelledProductChart() {
       opacity: 1,
     },
     xaxis: {
-      categories: ["Mon", "Thu", "Web", "Tue", "Fri", "Sat", "Sun"],
+      categories: ["Mon", "Thu", "Wed", "Tue", "Fri", "Sat", "Sun"], // Dias da semana como categorias no eixo X
     },
     tooltip: {
       fixed: {
@@ -82,6 +92,7 @@ export default function BestSelledProductChart() {
       },
     },
   };
+
   return (
     <Box
       sx={{
@@ -95,7 +106,7 @@ export default function BestSelledProductChart() {
       <ApexCharts
         options={options3}
         series={channelData}
-        type="line"
+        type="bar" // Gráfico de barras empilhadas
         width="100%"
         height="320"
       />

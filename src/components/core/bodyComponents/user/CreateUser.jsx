@@ -17,6 +17,7 @@ const CreateUser = ({ onUserAdded }) => {
   const { control, handleSubmit, reset, formState: { errors } } = useForm();
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
   const [snackbarMessage, setSnackbarMessage] = React.useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = React.useState('success'); // Adicionando snackbarSeverity
 
   const onSubmit = async (data) => {
     try {
@@ -28,20 +29,22 @@ const CreateUser = ({ onUserAdded }) => {
         status: "ACTIVE",
       });
 
-      if (response.status === 201) {
+      if (response.status === 200) {
         if (typeof onUserAdded === 'function') {
-          onUserAdded(response.data); // Chama a função para adicionar o novo usuário à lista
+          onUserAdded(response.data); 
+        } else {
+          console.error('onUserAdded is not a function');
         }
+
         setSnackbarMessage('Usuário criado com sucesso!');
+        setSnackbarSeverity('success'); 
         setSnackbarOpen(true);
-        reset(); // Limpa o formulário após o envio
-      } else {
-        setSnackbarMessage('Erro ao criar usuário: ' + response.data.message);
-        setSnackbarOpen(true);
-      }
+        reset(); 
+      } 
     } catch (error) {
       console.error(error);
       setSnackbarMessage('Erro ao criar usuário');
+      setSnackbarSeverity('error'); 
       setSnackbarOpen(true);
     }
   };
@@ -139,7 +142,7 @@ const CreateUser = ({ onUserAdded }) => {
       </Paper>
 
       <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar}>
-        <Alert onClose={handleCloseSnackbar} severity={snackbarMessage.includes('Erro') ? 'error' : 'success'} sx={{ width: '100%' }}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%' }}>
           {snackbarMessage}
         </Alert>
       </Snackbar>

@@ -1,66 +1,74 @@
-import { Box } from "@mui/material";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ApexCharts from "react-apexcharts";
+import { Box } from "@mui/material";
+import api from '../../../../api'; // Ajuste a importação conforme necessário
 
-export default function SalesGrowthCharts() {
+export default function SalesDataChart() {
+  const [series, setSeries] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await api.get('/orders/details'); // Ajuste a rota conforme necessário
+        const orders = response.data.content;
+
+        const productSales = {};
+        const productNames = [];
+
+        // Processar os dados para calcular a quantidade vendida por produto
+        orders.forEach(order => {
+          const productName = order.inventory.productName;
+          const quantity = order.quantity;
+
+          // Somar as quantidades vendidas de cada produto
+          if (productSales[productName]) {
+            productSales[productName] += quantity;
+          } else {
+            productSales[productName] = quantity;
+            productNames.push(productName); // Adiciona o nome do produto se for a primeira vez
+          }
+        });
+
+        // Organizar os dados para as séries e categorias do gráfico
+        const salesSeries = [
+          {
+            name: "Quantity Sold",
+            data: Object.values(productSales),
+          },
+        ];
+
+        setSeries(salesSeries);
+        setCategories(productNames);
+      } catch (error) {
+        console.error("Erro ao buscar dados dos pedidos", error);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
   const options = {
     chart: {
-      id: "basic-bar",
+      id: "sales-chart",
       type: "bar",
-      stacked: true, //one on top of another
     },
     dataLabels: {
       enabled: true,
     },
-    legend: {
-      position: "top",
-      horizontalAlign: "center",
-      offsetY: 0,
+    xaxis: {
+      categories: categories,
     },
     title: {
-      text: "Sales Growth Over The Year",
-    },
-    plotOptions: {
-      bar: {
-        columnWidth: "40%",
-        horizontal: false,
-      },
-    },
-    fill: {
-      opacity: 1,
-    },
-    xaxis: {
-      categories: [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aut",
-        "Spt",
-        "Oct",
-        "Nov",
-        "Dec",
-      ],
+      text: "Total Quantity Sold Per Product",
     },
     tooltip: {
-      fixed: {
-        enabled: true,
-        position: "topLeft", // topRight, topLeft, bottomRight, bottomLeft
-        offsetY: 30,
-        offsetX: 60,
+      y: {
+        formatter: (value) => `${value} units sold`,
       },
     },
   };
-  const series = [
-    {
-      name: "Revenue",
-      type: "column",
-      data: [70, 14, 20, 93, -35, 19, 36, -22, 42, 20, -15, 17],
-    },
-  ];
+
   return (
     <Box
       sx={{

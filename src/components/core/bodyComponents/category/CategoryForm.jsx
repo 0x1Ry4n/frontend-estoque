@@ -36,7 +36,7 @@ const CategoryForm = ({ onCategoryAdded }) => {
         setSnackbarMessage('Categoria cadastrada com sucesso!');
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
-        reset();  // Limpa os campos do formulário
+        reset();  
       }
     } catch (error) {
       setSnackbarMessage('Erro ao cadastrar categoria: ' + (error.response?.data?.message || 'Erro desconhecido.'));

@@ -57,7 +57,7 @@ export default function VisitorsGrowthCharts() {
     tooltip: {
       fixed: {
         enabled: true,
-        position: "topLeft", // topRight, topLeft, bottomRight, bottomLeft
+        position: "topLeft", 
         offsetY: 30,
         offsetX: 60,
       },

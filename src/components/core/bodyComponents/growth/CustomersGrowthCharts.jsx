@@ -1,32 +1,61 @@
 import React, { useEffect, useState } from "react";
 import ApexCharts from "react-apexcharts";
 import { Box } from "@mui/material";
+import api from '../../../../api'; 
+
 export default function CustomersGrowthCharts() {
-  const [channelData, setChannelData] = useState([]);
+  const [customerData, setCustomerData] = useState([]);
 
   useEffect(() => {
-    setChannelData([
-      {
-        name: "Current Week",
-        data: [49, 55, 70, 78, 103, 150],
-      },
-      {
-        name: "Previous Week",
-        data: [14, 25, 30, 38, 43, 45],
-      },
-    ]);
+    const fetchCustomers = async () => {
+      try {
+        const response = await api.get('/customer'); 
+        const customers = response.data.content;
+
+        const customerCountByDay = {
+          Mon: 0,
+          Tue: 0,
+          Wed: 0,
+          Thu: 0,
+          Fri: 0,
+          Sat: 0,
+          Sun: 0,
+        };
+
+        customers.forEach(customer => {
+          const day = new Date(customer.createdAt).toLocaleString('default', { weekday: 'short' });
+
+          if (customerCountByDay[day] !== undefined) {
+            console.log(customerCountByDay[day])
+            customerCountByDay[day] += 1; 
+          }
+        });
+
+        const counts = Object.values(customerCountByDay);
+
+        setCustomerData([ 
+          {
+            name: "New Customers",
+            data: counts,
+          },
+        ]);
+      } catch (error) {
+        console.error("Erro ao buscar dados dos clientes", error);
+      }
+    };
+
+    fetchCustomers();
 
     return () => {
-      setChannelData([]);
+      setCustomerData([]);
     };
   }, []);
 
-  const options3 = {
-    colors: ["#E32227", "#0070E0"],
-
+  const options = {
+    colors: ["#E32227"], 
     chart: {
-      id: "basic-bar",
-      type: "bar",
+      id: "customer-growth-chart",
+      type: "line",
     },
     dataLabels: {
       enabled: false,
@@ -37,14 +66,12 @@ export default function CustomersGrowthCharts() {
       offsetY: 0,
     },
     title: {
-      text: "Customer Growth",
+      text: "Customer Growth Over the Week",
     },
-
     stroke: {
       curve: "smooth",
       width: 2,
     },
-    color: {},
     markers: {
       size: 4,
       strokeWidth: 0,
@@ -56,17 +83,18 @@ export default function CustomersGrowthCharts() {
       opacity: 1,
     },
     xaxis: {
-      categories: ["Mon", "Thu", "Web", "Tue", "Fri", "Sat", "Sun"],
+      categories: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     },
     tooltip: {
       fixed: {
         enabled: true,
-        position: "topLeft", // topRight, topLeft, bottomRight, bottomLeft
+        position: "topLeft",
         offsetY: 30,
         offsetX: 60,
       },
     },
   };
+
   return (
     <Box
       sx={{
@@ -78,8 +106,8 @@ export default function CustomersGrowthCharts() {
       }}
     >
       <ApexCharts
-        options={options3}
-        series={channelData}
+        options={options}
+        series={customerData}
         type="line"
         width="100%"
         height="320"

@@ -1,44 +1,73 @@
 import React, { useEffect, useState } from "react";
 import ApexCharts from "react-apexcharts";
 import { Box } from "@mui/material";
+import api from '../../../../api';
+import dayjs from 'dayjs'; // Utilize a biblioteca dayjs para manipular datas
 
 export default function RevenueCostChart() {
   const [channelData, setChannelData] = useState([]);
 
   useEffect(() => {
-    setChannelData([
-      {
-        name: "Revenue",
-        type: "column",
-        data: [141, 250, 260, 270, 300, 330, 360, 400, 420, 1000, 1300, 1600],
-      },
-      {
-        name: "Cost",
-        type: "column",
-        data: [341, 350, 460, 370, 400, 140, 150, 120, 220, 700, 300, 600],
-      },
-    ]);
+    const fetchData = async () => {
+      try {
+        const response = await api.get(
+          "/orders/details",
+          {
+            params: {
+              page: 0,
+              size: 20,
+            },
+          }
+        );
+
+        const orders = response.data.content;
+
+        // Inicializar arrays para receita e custo por mês
+        const revenueData = Array(12).fill(0);
+        const costData = Array(12).fill(0);
+
+        orders.forEach((order) => {
+          const { totalPrice, quantity, inventory, orderDate } = order;
+          const { unitPrice } = inventory;
+
+          // Extraindo o mês da orderDate (1-12) e ajustando para índice (0-11)
+          const monthIndex = dayjs(orderDate).month(); // dayjs().month() retorna 0 para Janeiro e 11 para Dezembro
+
+          // Somar receita e custo para o mês correspondente
+          revenueData[monthIndex] += totalPrice;
+          costData[monthIndex] += quantity * unitPrice;
+        });
+
+        setChannelData([
+          {
+            name: "Revenue",
+            type: "column",
+            data: revenueData, // Dados organizados por mês
+          },
+          {
+            name: "Cost",
+            type: "column",
+            data: costData, // Dados organizados por mês
+          },
+        ]);
+      } catch (error) {
+        console.error("Erro ao buscar dados da API", error);
+      }
+    };
+
+    fetchData();
 
     return () => {
       setChannelData([]);
     };
   }, []);
 
-  let totalArray = [];
-  const total = channelData.forEach((value) => {
-    const data = value.data;
-    if (totalArray.length === 0) totalArray = [...data];
-    else {
-      data.forEach((val, index) => (totalArray[index] += val));
-    }
-  });
-
   const options3 = {
     colors: ["#00D100", "#FF2E2E"],
     chart: {
       id: "basic-bar",
       type: "bar",
-      stacked: false, //one on top of another
+      stacked: false,
     },
     dataLabels: {
       enabled: false,
@@ -62,29 +91,20 @@ export default function RevenueCostChart() {
     },
     xaxis: {
       categories: [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aut",
-        "Spt",
-        "Oct",
-        "Nov",
-        "Dec",
-      ],
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+      ], // Mapeando para meses
     },
     tooltip: {
       fixed: {
         enabled: true,
-        position: "topLeft", // topRight, topLeft, bottomRight, bottomLeft
+        position: "topLeft",
         offsetY: 30,
         offsetX: 60,
       },
     },
   };
+
   return (
     <Box
       sx={{
