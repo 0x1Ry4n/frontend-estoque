@@ -22,28 +22,27 @@ import {
 } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import api from '../api'; // Substitua pelo caminho correto da sua API
+import api from '../api'; 
 
 export default function NavBarComponent() {
   const [notificationAnchorEl, setNotificationAnchorEl] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
-  const [user, setUser] = useState(null); // Estado para armazenar o usuário
+  const [user, setUser] = useState(null); 
   const open = Boolean(anchorEl);
   const notificationOpen = Boolean(notificationAnchorEl);
   const navigate = useNavigate();
 
-  // Função para buscar os dados do usuário
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await api.get('/auth/me'); // Endpoint para buscar o usuário autenticado
-        setUser(response.data); // Define os dados do usuário
+        const response = await api.get('/auth/me');
+        setUser(response.data); 
       } catch (error) {
         console.error("Erro ao buscar os dados do usuário:", error);
       }
     };
 
-    fetchUser(); // Chama a função ao carregar o componente
+    fetchUser(); 
   }, []);
 
   const handleAvatarClicked = (event) => {
@@ -62,10 +61,9 @@ export default function NavBarComponent() {
     setNotificationAnchorEl(null);
   };
 
-  // Função para lidar com o clique em "Profile"
   const handleProfileClick = () => {
     handleClose();
-    navigate('/user'); // Redireciona para a página de perfil
+    navigate('/user'); 
   };
 
   return (
@@ -84,12 +82,11 @@ export default function NavBarComponent() {
                 <Typography fontFamily={"Inter"} variant="h6">
                   Estoque
                 </Typography>
-                {/* Mover a seção do usuário e notificações para a direita */}
                 <Box
                   sx={{
                     display: "flex",
                     alignItems: "center",
-                    ml: "auto", // Adicionando margem à esquerda para empurrar para a direita
+                    ml: "auto",
                   }}
                 >
                   <IconButton color="inherit">
@@ -121,7 +118,6 @@ export default function NavBarComponent() {
                       <Avatar sx={{ width: 32, height: 32 }}>{user?.username?.charAt(0).toUpperCase()}</Avatar>
                     </Tooltip>
                   </IconButton>
-                  {/* Exibir o email do usuário ou um texto de fallback */}
                   <Typography fontFamily={"Inter"}>{user?.email || "Carregando..."}</Typography>
                 </Box>
 
