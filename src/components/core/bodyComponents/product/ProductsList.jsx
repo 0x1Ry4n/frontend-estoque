@@ -302,7 +302,7 @@ const Products = () => {
               {detailedProduct.suppliers.map((supplier) => (
                 <div key={supplier.id}>
                   <p><strong>ID do Fornecedor:</strong> {supplier.id}</p>
-                  <p><strong>Nome:</strong> {supplier.name}</p>
+                  <p><strong>Nome:</strong> {supplier.socialReason}</p>
                   <p><strong>Email:</strong> {supplier.email}</p>
                   <p><strong>Telefone:</strong> {supplier.phone}</p>
                   <p><strong>Data de Criação:</strong> {new Date(supplier.createdAt).toLocaleString()}</p>
