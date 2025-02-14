@@ -9,6 +9,8 @@ import {
   InputAdornment,
   Snackbar,
   Alert,
+  Dialog,
+  DialogTitle,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -21,6 +23,7 @@ import {
 import { Autocomplete } from "@mui/material";
 import api from "./../../../../api";
 import { useForm, Controller } from "react-hook-form";
+import QrScanner from 'react-qr-scanner'; 
 
 const ProductForm = ({ onProductAdded }) => {
   const {
@@ -35,6 +38,8 @@ const ProductForm = ({ onProductAdded }) => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+  const [isScanning, setIsScanning] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -50,6 +55,32 @@ const ProductForm = ({ onProductAdded }) => {
     fetchCategories();
     fetchSuppliers();
   }, []);
+
+  const handleError = (err) => {
+    console.error(err);
+  };
+
+  const openCameraModal = () => {
+    setOpenModal(true);
+    setIsScanning(true);
+  };
+
+  const closeCameraModal = () => {
+    setOpenModal(false);
+    setIsScanning(false);
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
+  const handleScan = (data) => {
+    if (data) {
+      console.log(data);
+      reset({ productCode: data.text }); 
+      setOpenModal(false);
+    }
+  };
 
   const onSubmit = async (data) => {
     try {
@@ -82,15 +113,11 @@ const ProductForm = ({ onProductAdded }) => {
     }
   };
 
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false);
-  };
-
   return (
     <Box>
       <Paper
         elevation={4}
-        sx={{ padding: 4, borderRadius: 2, backgroundColor: "#f5f5f5" }}
+        sx={{ padding: 4, borderRadius: 2, backgroundColor: "#f5f5f5", width: "95%"}}
       >
         <Typography
           variant="h5"
@@ -198,6 +225,33 @@ const ProductForm = ({ onProductAdded }) => {
                 )}
               />
             </Grid>
+            <Grid item md={6} xs={12}>
+              <Controller
+                name="productCode"
+                rules={{ required: 'O código do produto é obrigatório.' }}
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Código do Produto"
+                    fullWidth
+                    variant="outlined"
+                    error={!!errors.productCode} 
+                    helperText={errors.productCode ? errors.productCode.message : ''}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Button onClick={openCameraModal}>Escanear QRCode</Button>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
+              />
+            </Grid>
             <Grid item md={6}>
               <Controller
                 name="categoryId"
@@ -298,6 +352,23 @@ const ProductForm = ({ onProductAdded }) => {
           </Button>
         </Box>
       </Paper>
+
+      <Dialog open={openModal} onClose={closeCameraModal}>
+        <DialogTitle>Escanear QR Code</DialogTitle>
+        <Box sx={{ padding: 2, textAlign: 'center' }}>
+          {isScanning && (
+            <QrScanner
+              delay={300}
+              onError={handleError}
+              onScan={handleScan}
+              style={{ width: '100%' }}
+            />
+          )}
+          <Button onClick={closeCameraModal} variant="outlined" sx={{ mt: 2 }}>
+            Cancelar
+          </Button>
+        </Box>
+      </Dialog>
 
       <Snackbar
         open={snackbarOpen}

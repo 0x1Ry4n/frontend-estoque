@@ -103,7 +103,7 @@ const ReceivementForm = ({ onReceivementAdded }) => {
     <Box>
       <Paper
         elevation={4}
-        sx={{ padding: 4, borderRadius: 2, backgroundColor: "#f5f5f5" }}
+        sx={{ padding: 4, borderRadius: 2, backgroundColor: "#f5f5f5", width: '95%'}}
       >
         <Typography
           variant="h5"
@@ -119,36 +119,7 @@ const ReceivementForm = ({ onReceivementAdded }) => {
         </Typography>
         <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={4}>
-            <Grid item md={6}>
-              <Controller
-                name="name"
-                control={control}
-                defaultValue=""
-                rules={{ required: "O nome é obrigatório." }}
-                render={({ field }) => (
-                  <TextField
-                    label="Nome"
-                    fullWidth
-                    variant="outlined"
-                    {...field}
-                    error={!!errors.name}
-                    helperText={errors.name ? errors.name.message : ""}
-                    sx={{ mb: 2 }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <AddIcon />
-                        </InputAdornment>
-                      ),
-                    }}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                  />
-                )}
-              />
-            </Grid>
-            <Grid item md={6}>
+            <Grid item md={12}>
               <Controller
                 name="quantity"
                 control={control}

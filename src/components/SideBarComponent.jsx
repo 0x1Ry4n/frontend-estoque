@@ -9,6 +9,8 @@ import {
   IconButton,
   Box,
   Collapse,
+  Drawer,
+  useMediaQuery,
 } from "@mui/material";
 import {
   HomeOutlined,
@@ -21,12 +23,12 @@ import {
   AddCircleOutline,
   CreditCardOutlined,
   GroupOutlined,
-  MonetizationOnOutlined,
   ShowChartOutlined,
   SettingsOutlined,
   ExpandMore,
   ExpandLess,
-  Inventory2Outlined
+  Menu as MenuIcon,
+  Inventory2Outlined,
 } from "@mui/icons-material";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -48,11 +50,12 @@ export default function SideBarComponent() {
     { title: "Saídas", route: "exits", component: <CreditCardOutlined /> },
     { title: "Usuários", route: "create-user", component: <GroupOutlined /> }, 
     { title: "Crescimento", route: "growth", component: <ShowChartOutlined /> },
-    { title: "Configurações", route: "settings", component: <SettingsOutlined /> },
   ];  
 
   const [selected, setSelected] = useState(0);
   const [open, setOpen] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const isSmallScreen = useMediaQuery("(max-width:600px)");
 
   const handleSelectedComponent = (index) => {
     setSelected(index);
@@ -62,72 +65,89 @@ export default function SideBarComponent() {
     setOpen(!open);
   };
 
-  return (
-    <Box
-      sx={{
-        position: "fixed",
-        left: 0,
-        top: 0,
-        bgcolor: "#ffffff",
-        height: "100vh",
-        boxShadow: 2,
-        p: 2,
-        zIndex: 1000,
-        transition: "width 0.3s",
-        width: open ? { xs: "60vw", sm: "250px" } : { xs: "15vw", sm: "60px" },
-      }}
-    >
-      <IconButton onClick={toggleSidebar} sx={{ mt: 15 }}>
-        {open ? <ExpandLess /> : <ExpandMore />}
-      </IconButton>
-      
-      <Collapse in={open}>
-        <List>
-          {sideBarComponent.map((comp, index) => (
-            <ListItem disablePadding key={index}>
-              <Box width="100%">
-                <ListItemButton
-                  onClick={() => {
-                    handleSelectedComponent(index);
-                    navigate(comp.route.toLowerCase());
-                  }}
-                  selected={index === selected && currentPage === "/" + comp.route.toLowerCase()}
-                  sx={{
-                    mb: 2,
-                    bgcolor: selected === index ? "#e0f2f1" : "transparent",
-                    borderRadius: 2,
-                    transition: "background-color 0.2s",
-                    '&:hover': {
-                      bgcolor: "#b2dfdb",
-                    },
-                  }}
-                >
-                  <ListItemIcon sx={{
+  const toggleDrawer = () => {
+    setDrawerOpen(!drawerOpen);
+  };
+
+  const SidebarContent = (
+    <List>
+      {sideBarComponent.map((comp, index) => (
+        <ListItem disablePadding key={index}>
+          <Box width="100%">
+            <ListItemButton
+              onClick={() => {
+                handleSelectedComponent(index);
+                navigate(comp.route.toLowerCase());
+                if (isSmallScreen) toggleDrawer(); 
+              }}
+              selected={index === selected && currentPage === "/" + comp.route.toLowerCase()}
+              sx={{
+                mb: 2,
+                bgcolor: selected === index ? "#e0f2f1" : "transparent",
+                borderRadius: 2,
+                transition: "background-color 0.2s",
+                '&:hover': {
+                  bgcolor: "#b2dfdb",
+                },
+              }}
+            >
+              <ListItemIcon sx={{ color: selected === index ? "#00796b" : "inherit" }}>
+                {comp.component}
+              </ListItemIcon>
+              {!isSmallScreen && (
+                <ListItemText
+                  primary={comp.title}
+                  primaryTypographyProps={{
+                    fontSize: "medium",
+                    fontWeight: selected === index ? "bold" : "normal",
                     color: selected === index ? "#00796b" : "inherit",
-                  }}>
-                    <IconButton>
-                      {comp.component}
-                    </IconButton>
-                  </ListItemIcon>
-                  {open && (
-                    <ListItemText
-                      primary={comp.title}
-                      primaryTypographyProps={{
-                        fontSize: "medium",
-                        fontWeight: selected === index ? "bold" : "normal",
-                        color: selected === index ? "#00796b" : "inherit",
-                      }}
-                      sx={{
-                        display: { xs: "none", sm: "block" }
-                      }}
-                    />
-                  )}
-                </ListItemButton>
-              </Box>
-            </ListItem>
-          ))}
-        </List>
-      </Collapse>
-    </Box>
+                  }}
+                />
+              )}
+            </ListItemButton>
+          </Box>
+        </ListItem>
+      ))}
+    </List>
+  );
+
+  return (
+    <>
+      {isSmallScreen ? (
+        <>
+          <IconButton onClick={toggleDrawer} sx={{ position: "fixed", top: 15, left: 15 }}>
+            <MenuIcon />
+          </IconButton>
+          <Drawer
+            anchor="left"
+            open={drawerOpen}
+            onClose={toggleDrawer}
+            sx={{ width: "250px" }}
+          >
+            {SidebarContent}
+          </Drawer>
+        </>
+      ) : (
+        <Box
+          sx={{
+            position: "fixed",
+            left: 0,
+            top: 0,
+            bgcolor: "#ffffff",
+            height: "100vh",
+            boxShadow: 2,
+            p: 2,
+            zIndex: 1000,
+            transition: "width 0.3s",
+            width: open ? "250px" : "60px",
+          }}
+        >
+          <IconButton onClick={toggleSidebar} sx={{ mt: 15 }}>
+            {open ? <ExpandLess /> : <ExpandMore />}
+          </IconButton>
+          <Collapse in={open}>{SidebarContent}</Collapse>
+        </Box>
+      )}
+    </>
   );
 }

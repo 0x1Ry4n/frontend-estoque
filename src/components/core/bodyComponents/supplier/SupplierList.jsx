@@ -11,6 +11,7 @@ import {
   MenuItem,
   Select,
   InputAdornment,
+  InputLabel,
 } from "@mui/material";
 import {
   Delete as DeleteIcon,
@@ -103,18 +104,8 @@ const Suppliers = () => {
   };
 
   const handleSave = async () => {
-    const {
-      name,
-      email,
-      phone,
-      socialReason,
-      cnpj,
-      contactPerson,
-      cep,
-      website,
-      communicationPreference,
-    } = selectedSupplier;
-  
+    const { socialReason, cnpj, communicationPreference } = selectedSupplier;
+
     // Verifica se todos os campos obrigatórios estão preenchidos
     if (!socialReason || !cnpj || !communicationPreference) {
       setSnackbarMessage("Por favor, preencha todos os campos obrigatórios!");
@@ -122,7 +113,7 @@ const Suppliers = () => {
       setSnackbarOpen(true);
       return;
     }
-  
+
     try {
       if (isEditing) {
         await api.patch(`/supplier/${selectedSupplier.id}`, selectedSupplier);
@@ -205,6 +196,7 @@ const Suppliers = () => {
         padding: "20px",
         backgroundColor: "#f5f5f5",
         borderRadius: "8px",
+        width: "95%",
       }}
     >
       <Button
@@ -387,9 +379,12 @@ const Suppliers = () => {
                 </InputAdornment>
               ),
             }}
+            sx={{ mb: 6 }}
           />
 
-          <Select
+          <TextField
+            select
+            fullWidth
             label="Preferência de Comunicação"
             value={selectedSupplier?.communicationPreference || ""}
             onChange={(e) =>
@@ -398,12 +393,12 @@ const Suppliers = () => {
                 communicationPreference: e.target.value,
               })
             }
-            fullWidth
+            variant="outlined"
             required
           >
             <MenuItem value="EMAIL">Email</MenuItem>
             <MenuItem value="PHONE">Telefone</MenuItem>
-          </Select>
+          </TextField>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} color="secondary">

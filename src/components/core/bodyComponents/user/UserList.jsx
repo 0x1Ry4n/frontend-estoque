@@ -115,7 +115,7 @@ const UserList = () => {
   ];
 
   return (
-    <div style={{ padding: '20px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
+    <div style={{ padding: '20px', backgroundColor: '#f5f5f5', borderRadius: '8px', width: '95%' }}>
       <Button 
         variant="outlined" 
         startIcon={<RefreshIcon />} 

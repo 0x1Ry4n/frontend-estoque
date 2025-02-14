@@ -119,7 +119,7 @@ const CreateUser = ({ onUserAdded }) => {
   }, [isCapturingFace]);
 
   return (
-    <Box sx={{ maxWidth: "100%", padding: 3, margin: "auto" }}>
+    <Box sx={{ maxWidth: "100%", padding: 3}}>
       <Paper
         elevation={4}
         sx={{ padding: 4, borderRadius: 2, backgroundColor: "#f5f5f5" }}

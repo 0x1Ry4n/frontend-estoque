@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Box,
   Button,
@@ -10,31 +10,45 @@ import {
   Alert,
   Select,
   MenuItem,
-  InputLabel,
-} from '@mui/material';
-import { AddCircleOutline, PersonOutline, EmailOutlined, PhoneOutlined, BusinessOutlined, WebOutlined, LocationOnOutlined } from '@mui/icons-material';
-import InputMask from 'react-input-mask';
-import api from './../../../../api';
-import { useForm, Controller } from 'react-hook-form';
+} from "@mui/material";
+import {
+  AddCircleOutline,
+  PersonOutline,
+  EmailOutlined,
+  PhoneOutlined,
+  BusinessOutlined,
+  WebOutlined,
+  LocationOnOutlined,
+} from "@mui/icons-material";
+import InputMask from "react-input-mask";
+import api from "./../../../../api";
+import { useForm, Controller } from "react-hook-form";
 
 const SupplierForm = ({ onSupplierAdded }) => {
-  const { control, handleSubmit, reset, formState: { errors } } = useForm();
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm();
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
-  const [snackbarMessage, setSnackbarMessage] = React.useState('');
+  const [snackbarMessage, setSnackbarMessage] = React.useState("");
 
   const onSubmit = async (data) => {
     try {
-      const response = await api.post('/supplier', data);
+      const response = await api.post("/supplier", data);
       if (response.status === 201) {
         onSupplierAdded?.(response.data);
-        setSnackbarMessage('Fornecedor cadastrado com sucesso!');
+        setSnackbarMessage("Fornecedor cadastrado com sucesso!");
         reset();
       } else {
-        setSnackbarMessage('Erro ao cadastrar fornecedor: ' + response.data.message);
+        setSnackbarMessage(
+          "Erro ao cadastrar fornecedor: " + response.data.message
+        );
       }
       setSnackbarOpen(true);
     } catch (error) {
-      setSnackbarMessage('Erro ao cadastrar fornecedor');
+      setSnackbarMessage("Erro ao cadastrar fornecedor");
       setSnackbarOpen(true);
     }
   };
@@ -43,8 +57,24 @@ const SupplierForm = ({ onSupplierAdded }) => {
 
   return (
     <Box>
-      <Paper elevation={4} sx={{ padding: 4, borderRadius: 2, backgroundColor: '#f5f5f5' }}>
-        <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+      <Paper
+        elevation={4}
+        sx={{
+          padding: 4,
+          borderRadius: 2,
+          backgroundColor: "#f5f5f5",
+          width: "95%",
+        }}
+      >
+        <Typography
+          variant="h5"
+          sx={{
+            mb: 3,
+            fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
           <PersonOutline sx={{ mr: 1 }} /> Cadastrar Fornecedor
         </Typography>
         <Box component="form" onSubmit={handleSubmit(onSubmit)}>
@@ -53,7 +83,7 @@ const SupplierForm = ({ onSupplierAdded }) => {
             name="socialReason"
             control={control}
             defaultValue=""
-            rules={{ required: 'A razão social é obrigatória.' }}
+            rules={{ required: "A razão social é obrigatória." }}
             render={({ field }) => (
               <TextField
                 label="Razão Social"
@@ -61,7 +91,9 @@ const SupplierForm = ({ onSupplierAdded }) => {
                 variant="outlined"
                 {...field}
                 error={!!errors.socialReason}
-                helperText={errors.socialReason ? errors.socialReason.message : ''}
+                helperText={
+                  errors.socialReason ? errors.socialReason.message : ""
+                }
                 sx={{ mb: 4 }}
                 InputProps={{
                   startAdornment: (
@@ -79,7 +111,7 @@ const SupplierForm = ({ onSupplierAdded }) => {
             name="cnpj"
             control={control}
             defaultValue=""
-            rules={{ required: 'O CNPJ é obrigatório.' }}
+            rules={{ required: "O CNPJ é obrigatório." }}
             render={({ field }) => (
               <InputMask
                 mask="99.999.999/9999-99"
@@ -93,7 +125,7 @@ const SupplierForm = ({ onSupplierAdded }) => {
                     fullWidth
                     variant="outlined"
                     error={!!errors.cnpj}
-                    helperText={errors.cnpj ? errors.cnpj.message : ''}
+                    helperText={errors.cnpj ? errors.cnpj.message : ""}
                     sx={{ mb: 4 }}
                     InputProps={{
                       startAdornment: (
@@ -113,7 +145,13 @@ const SupplierForm = ({ onSupplierAdded }) => {
             name="email"
             control={control}
             defaultValue=""
-            rules={{ required: 'O e-mail é obrigatório.', pattern: { value: /\S+@\S+\.\S+/, message: 'O e-mail deve ser válido.' } }}
+            rules={{
+              required: "O e-mail é obrigatório.",
+              pattern: {
+                value: /\S+@\S+\.\S+/,
+                message: "O e-mail deve ser válido.",
+              },
+            }}
             render={({ field }) => (
               <TextField
                 label="E-mail"
@@ -121,7 +159,7 @@ const SupplierForm = ({ onSupplierAdded }) => {
                 variant="outlined"
                 {...field}
                 error={!!errors.email}
-                helperText={errors.email ? errors.email.message : ''}
+                helperText={errors.email ? errors.email.message : ""}
                 sx={{ mb: 4 }}
                 InputProps={{
                   startAdornment: (
@@ -139,7 +177,7 @@ const SupplierForm = ({ onSupplierAdded }) => {
             name="phone"
             control={control}
             defaultValue=""
-            rules={{ required: 'O telefone é obrigatório.' }}
+            rules={{ required: "O telefone é obrigatório." }}
             render={({ field }) => (
               <InputMask
                 mask="(99) 99999-9999"
@@ -153,7 +191,7 @@ const SupplierForm = ({ onSupplierAdded }) => {
                     fullWidth
                     variant="outlined"
                     error={!!errors.phone}
-                    helperText={errors.phone ? errors.phone.message : ''}
+                    helperText={errors.phone ? errors.phone.message : ""}
                     sx={{ mb: 4 }}
                     InputProps={{
                       startAdornment: (
@@ -244,38 +282,55 @@ const SupplierForm = ({ onSupplierAdded }) => {
             )}
           />
           {/* Campo Preferência de Comunicação */}
-          <InputLabel shrink={true}>Preferência de Comunicação</InputLabel>
           <Controller
             name="communicationPreference"
             control={control}
             defaultValue=""
-            rules={{ required: 'A preferência de comunicação é obrigatória.' }}
+            rules={{ required: "A preferência de comunicação é obrigatória." }}
             render={({ field }) => (
-              <Select
-                label="Preferência de Comunicação"
+              <TextField
                 {...field}
+                select
                 fullWidth
+                label="Preferência de Comunicação"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <WebOutlined />
+                    </InputAdornment>
+                  ),
+                }}
+                variant="outlined"
                 error={!!errors.communicationPreference}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <WebOutlined />
-                  </InputAdornment>
-                }
+                helperText={errors.communicationPreference?.message}
               >
                 <MenuItem value="EMAIL">Email</MenuItem>
                 <MenuItem value="PHONE">Telefone</MenuItem>
-              </Select>
+              </TextField>
             )}
           />
 
-          <Button type="submit" variant="contained" color="primary" sx={{ mt: 4, display: 'flex', alignItems: 'center' }}>
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            sx={{ mt: 4, display: "flex", alignItems: "center" }}
+          >
             <AddCircleOutline sx={{ mr: 1 }} /> Cadastrar Fornecedor
           </Button>
         </Box>
       </Paper>
 
-      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar}>
-        <Alert onClose={handleCloseSnackbar} severity={snackbarMessage.includes('Erro') ? 'error' : 'success'} sx={{ width: '100%' }}>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbarMessage.includes("Erro") ? "error" : "success"}
+          sx={{ width: "100%" }}
+        >
           {snackbarMessage}
         </Alert>
       </Snackbar>

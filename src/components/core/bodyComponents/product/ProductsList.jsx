@@ -15,9 +15,7 @@ import {
   Edit as EditIcon,
   Visibility as VisibilityIcon,
   Refresh as RefreshIcon,
-  DateRange as DateRangeIcon,
 } from "@mui/icons-material";
-import { Select, MenuItem } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import api from "../../../../api";
 import Swal from "sweetalert2";
@@ -61,6 +59,7 @@ const Products = () => {
   const fetchProducts = async () => {
     try {
       const response = await api.get("/products");
+      console.log(response.data.content);
       setRows(response.data.content);
     } catch (error) {
       console.error("Erro ao buscar produtos: ", error);
@@ -189,6 +188,12 @@ const Products = () => {
       editable: true,
     },
     {
+      field: "productCode",
+      headerName: "Cod. Produto",
+      width: 200,
+      editable: true,
+    },
+    {
       field: "unitPrice",
       headerName: "Preço Unitário",
       width: 150,
@@ -246,6 +251,7 @@ const Products = () => {
         padding: "20px",
         backgroundColor: "#f5f5f5",
         borderRadius: "8px",
+        width: "95%",
       }}
     >
       <Button
@@ -283,6 +289,7 @@ const Products = () => {
               setSelectedProduct({ ...selectedProduct, name: e.target.value })
             }
             InputProps={{ readOnly: true }}
+            sx={{ mb: 3 }}
           />
           <Controller
             name="suppliers"
@@ -290,39 +297,45 @@ const Products = () => {
             render={({ field }) => (
               <Autocomplete
                 multiple
-                options={suppliers}
-                getOptionLabel={(option) => option.socialReason}
-                value={suppliers.filter((sup) =>
-                  selectedProduct?.suppliers?.includes(sup.id)
+                options={suppliers || []}
+                getOptionLabel={(option) => option.socialReason || ""}
+                value={suppliers?.filter((sup) =>
+                  selectedProduct?.supplierIds?.includes(sup.id)
                 )}
                 onChange={(_, value) => {
                   const ids = value.map((v) => v.id);
                   field.onChange(ids);
-                  setSelectedProduct({ ...selectedProduct, suppliers: ids });
+                  setSelectedProduct({ ...selectedProduct, supplierIds: ids });
                 }}
                 renderInput={(params) => (
                   <TextField {...params} label="Fornecedores" />
                 )}
-                style={{ marginBottom: "10px" }}
+                sx={{ mb: 3 }}
               />
             )}
           />
-           <Controller
+          <Controller
             name="category"
             control={control}
             render={({ field }) => (
               <Autocomplete
-                options={categories}
-                getOptionLabel={(option) => option.name}
-                value={categories.find(
-                  (cat) => cat.id === selectedProduct?.category
-                )}
+                options={categories || []}
+                getOptionLabel={(option) => option.name || ""}
+                value={
+                  categories?.find(
+                    (cat) => cat.id === selectedProduct?.categoryId
+                  ) || null
+                }
                 onChange={(_, value) => {
                   field.onChange(value ? value.id : "");
-                  setSelectedProduct({ ...selectedProduct, category: value?.id });
+                  setSelectedProduct({
+                    ...selectedProduct,
+                    categoryId: value?.id,
+                  });
                 }}
-                renderInput={(params) => <TextField {...params} label="Categoria" />}
-                style={{ marginBottom: "10px" }}
+                renderInput={(params) => (
+                  <TextField {...params} label="Categoria" />
+                )}
               />
             )}
           />

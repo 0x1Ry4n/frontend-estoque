@@ -101,7 +101,7 @@ const InventoryForm = ({ onInventoryAdded }) => {
 
   return (
     <Box>
-      <Paper elevation={4} sx={{ padding: 4, borderRadius: 2, backgroundColor: '#f5f5f5' }}>
+      <Paper elevation={4} sx={{ padding: 4, borderRadius: 2, backgroundColor: '#f5f5f5', width: '95%'  }}>
         <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
           <Inventory2 sx={{ mr: 1 }} />
           Cadastrar Inventário
@@ -109,7 +109,7 @@ const InventoryForm = ({ onInventoryAdded }) => {
 
         <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={4}>
-            <Grid item md={6} xs={12}>
+            <Grid item md={6}>
               <Controller
                 name="productId"
                 control={control}
@@ -136,7 +136,7 @@ const InventoryForm = ({ onInventoryAdded }) => {
               />
             </Grid>
 
-            <Grid item md={6} xs={12}>
+            <Grid item md={6}>
               <Controller
                 name="discount"
                 control={control}

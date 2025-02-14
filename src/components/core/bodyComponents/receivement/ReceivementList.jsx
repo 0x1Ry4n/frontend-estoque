@@ -8,6 +8,7 @@ import {
   TextField,
   Snackbar,
   Alert,
+  Autocomplete,
 } from "@mui/material";
 import {
   Delete as DeleteIcon,
@@ -21,6 +22,8 @@ import Swal from "sweetalert2";
 const ReceivementList = () => {
   const [open, setOpen] = useState(false);
   const [selectedReceivement, setSelectedReceivement] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
   const [rows, setRows] = useState([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -35,12 +38,25 @@ const ReceivementList = () => {
   };
 
   useEffect(() => {
+    const fetchProducts = async () => {
+      const response = await api.get("/products");
+      setProducts(response.data.content);
+    };
+
+    const fetchSuppliers = async () => {
+      const response = await api.get("/supplier");
+      setSuppliers(response.data.content);
+    };
+
+    fetchProducts();
+    fetchSuppliers();
     fetchReceivements();
   }, []);
 
   const fetchReceivements = async () => {
     try {
       const response = await api.get("/receivements");
+      console.log(response.data.content);
       setRows(response.data.content);
     } catch (error) {
       console.error("Erro ao buscar os recebimentos: ", error);
@@ -87,21 +103,24 @@ const ReceivementList = () => {
   };
 
   const handleSave = async () => {
-    if (!selectedReceivement.name) {
-      setSnackbarMessage("Por favor, preencha o nome do recebimento!");
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-      return;
-    }
-
     try {
       if (isEditing) {
         await api.patch(`/receivements/${selectedReceivement.id}`, {
-          name: selectedReceivement.name,
+          description: selectedReceivement.description,
+          quantity: selectedReceivement.quantity,
+          supplierId: selectedReceivement.supplierId,
+          productId: selectedReceivement.productId, // Corrigido aqui
+          receivingDate: selectedReceivement.receivingDate,
         });
         setSnackbarMessage("Recebimento atualizado com sucesso!");
       } else {
-        const newCategory = { name: selectedReceivement.name };
+        const newCategory = {
+          description: selectedReceivement.description,
+          quantity: selectedReceivement.quantity,
+          supplierId: selectedReceivement.supplierId,
+          productId: selectedReceivement.productId,
+          receivingDate: selectedReceivement.receivingDate,
+        };
         await api.post("/receivements", newCategory);
         setSnackbarMessage("Recebimento adicionado com sucesso!");
       }
@@ -125,6 +144,7 @@ const ReceivementList = () => {
 
   const columns = [
     { field: "id", headerName: "ID", width: 90 },
+    { field: "description", headerName: "Descrição", width: 100 },
     { field: "productId", headerName: "ID Produto", width: 100 },
     { field: "supplierName", headerName: "Fornecedor", width: 200 },
     { field: "inventoryCode", headerName: "Código (Inventário)", width: 150 },
@@ -171,6 +191,7 @@ const ReceivementList = () => {
         padding: "20px",
         backgroundColor: "#f5f5f5",
         borderRadius: "8px",
+        width: "95%",
       }}
     >
       <Button
@@ -196,21 +217,89 @@ const ReceivementList = () => {
 
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>
-          {isEditing ? "Editar Categoria" : "Adicionar Categoria"}
+          {isEditing ? "Editar Recebimento" : "Adicionar Recebimento"}
         </DialogTitle>
         <DialogContent>
           <TextField
-            label="Nome da Categoria"
+            label="Descrição"
+            variant="outlined"
             fullWidth
             margin="normal"
-            value={selectedReceivement?.name || ""}
+            value={selectedReceivement?.description || ""}
             onChange={(e) =>
               setSelectedReceivement({
                 ...selectedReceivement,
                 name: e.target.value,
               })
             }
-            InputProps={{ readOnly: true }}
+          />
+
+          <TextField
+            label="Quantidade"
+            type="number"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            value={selectedReceivement?.quantity || ""}
+            onChange={(e) =>
+              setSelectedReceivement({
+                ...selectedReceivement,
+                quantity: e.target.value,
+              })
+            }
+            sx={{ mb: 6 }}
+          />
+
+          <Autocomplete
+            options={products || []}
+            getOptionLabel={(option) => option.name || ""}
+            value={
+              products?.find(
+                (prod) => prod.id === selectedReceivement?.productId
+              ) || null
+            }
+            onChange={(_, value) => {
+              setSelectedReceivement({
+                ...selectedReceivement,
+                productId: value?.id,
+              });
+            }}
+            renderInput={(params) => <TextField {...params} label="Produto" />}
+            sx={{ mb: 3 }}
+          />
+
+          <Autocomplete
+            options={suppliers || []}
+            getOptionLabel={(option) => option.socialReason || ""}
+            value={
+              suppliers?.find(
+                (sup) => sup.id === selectedReceivement?.supplierId
+              ) || null
+            }
+            onChange={(_, value) => {
+              setSelectedReceivement({
+                ...selectedReceivement,
+                supplierId: value?.id,
+              });
+            }}
+            renderInput={(params) => (
+              <TextField {...params} label="Fornecedor" />
+            )}
+            sx={{ mb: 3 }}
+          />
+          <TextField
+            label="Data de Recebimento"
+            type="date"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            value={selectedReceivement?.receivingDate || ""}
+            onChange={(e) =>
+              setSelectedReceivement({
+                ...selectedReceivement,
+                receivingDate: e.target.value,
+              })
+            }
           />
         </DialogContent>
         <DialogActions>
