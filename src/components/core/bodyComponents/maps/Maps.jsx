@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polygon, Polyline, FeatureGroup, useMap } from 'react-leaflet';
 import { EditControl } from 'react-leaflet-draw';
 import L from 'leaflet';
-import { Button, Box, TextField, AppBar, Toolbar, Typography, Container } from '@mui/material';
+import { Button, Box, TextField, AppBar, Toolbar, Typography, Container, Grid, Tooltip } from '@mui/material';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 
@@ -149,7 +149,7 @@ const MapComponent = () => {
     const map = useMap();
     useEffect(() => {
       if (polygons.length > 0 || lines.length > 0) {
-        const group = new L.featureGroup([
+        const group = new L.featureGroup([ 
           ...polygons.map((polygon) => L.polygon(polygon)),
           ...lines.map((line) => L.polyline(line)),
         ]);
@@ -166,53 +166,101 @@ const MapComponent = () => {
           <Typography variant="h6">Mapa de Marcadores</Typography>
         </Toolbar>
       </AppBar>
-      <Box sx={{ my: 2, display: 'flex', justifyContent: 'space-between' }}>
-        <TextField
-          label="Filtrar Notas"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          variant="outlined"
-          size="small"
-          sx={{ flex: 1, mr: 2 }}
-        />
-        <Button variant="contained" onClick={searchLocation}>
-          Buscar Localização
-        </Button>
+
+      {/* Filtro e Buscar Localização */}
+      <Box sx={{ my: 2 }}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6} md={4}>
+            <TextField
+              label="Filtrar Notas"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              variant="outlined"
+              size="small"
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4}>
+            <Tooltip title="Buscar Localização">
+              <Button variant="contained" fullWidth onClick={searchLocation}>
+                Buscar Localização
+              </Button>
+            </Tooltip>
+          </Grid>
+        </Grid>
       </Box>
 
-      <Box sx={{ my: 2, display: 'flex', justifyContent: 'space-between' }}>
-        <Button variant="outlined" onClick={() => setShowPolygons(!showPolygons)}>
-          {showPolygons ? 'Esconder Polígonos' : 'Mostrar Polígonos'}
-        </Button>
-        <Button variant="outlined" onClick={() => setShowLines(!showLines)}>
-          {showLines ? 'Esconder Linhas' : 'Mostrar Linhas'}
-        </Button>
-        <Button variant="outlined" color="warning" onClick={clearMarkers}>
-          Limpar Marcadores
-        </Button>
-        <Button variant="outlined" color="secondary" onClick={restoreDefaultMarkers}>
-          Restaurar Marcadores Padrão
-        </Button>
-        <Button variant="outlined" onClick={calculateDistance} disabled={selectedMarkers.length !== 2}>
-          Calcular Distância
-        </Button>
-        <Button variant="outlined" onClick={handleExport}>
-          Exportar Sessão
-        </Button>
-        <input
-          accept="application/json"
-          style={{ display: 'none' }}
-          id="import-file"
-          type="file"
-          onChange={handleImport}
-        />
-        <label htmlFor="import-file">
-          <Button variant="outlined" component="span">
-            Importar Sessão
-          </Button>
-        </label>
+      {/* Botões de Controle */}
+      <Box sx={{ my: 2 }}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Tooltip title={showPolygons ? "Esconder Polígonos" : "Mostrar Polígonos"}>
+              <Button variant="outlined" fullWidth onClick={() => setShowPolygons(!showPolygons)}>
+                {showPolygons ? 'Esconder Polígonos' : 'Mostrar Polígonos'}
+              </Button>
+            </Tooltip>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Tooltip title={showLines ? "Esconder Linhas" : "Mostrar Linhas"}>
+              <Button variant="outlined" fullWidth onClick={() => setShowLines(!showLines)}>
+                {showLines ? 'Esconder Linhas' : 'Mostrar Linhas'}
+              </Button>
+            </Tooltip>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Tooltip title="Limpar Marcadores">
+              <Button variant="outlined" color="warning" fullWidth onClick={clearMarkers}>
+                Limpar Marcadores
+              </Button>
+            </Tooltip>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Tooltip title="Restaurar Marcadores Padrão">
+              <Button variant="outlined" color="secondary" fullWidth onClick={restoreDefaultMarkers}>
+                Restaurar Marcadores Padrão
+              </Button>
+            </Tooltip>
+          </Grid>
+        </Grid>
       </Box>
 
+      {/* Calcular Distância e Exportar */}
+      <Box sx={{ my: 2 }}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Tooltip title="Calcular Distância entre Marcadores">
+              <Button variant="outlined" fullWidth onClick={calculateDistance} disabled={selectedMarkers.length !== 2}>
+                Calcular Distância
+              </Button>
+            </Tooltip>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Tooltip title="Exportar Sessão">
+              <Button variant="outlined" fullWidth onClick={handleExport}>
+                Exportar Sessão
+              </Button>
+            </Tooltip>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Tooltip title="Importar Sessão">
+              <label htmlFor="import-file">
+                <Button variant="outlined" fullWidth component="span">
+                  Importar Sessão
+                </Button>
+              </label>
+            </Tooltip>
+            <input
+              accept="application/json"
+              style={{ display: 'none' }}
+              id="import-file"
+              type="file"
+              onChange={handleImport}
+            />
+          </Grid>
+        </Grid>
+      </Box>
+
+      {/* Mapa */}
       <MapContainer center={[-23.5505, -46.6333]} zoom={13} onClick={addMarker} style={{ height: '600px', width: '100%' }}>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -239,7 +287,7 @@ const MapComponent = () => {
             }}
           />
         </FeatureGroup>
-        
+
         {markers.filter(marker => marker.note.includes(filter)).map((marker, index) => (
           <Marker
             key={index}

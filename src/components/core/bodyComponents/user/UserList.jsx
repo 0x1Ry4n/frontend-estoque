@@ -24,7 +24,7 @@ const UserList = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState(""); 
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // Estado para controlar a visibilidade da senha
+  const [showPassword, setShowPassword] = useState(false); 
 
   useEffect(() => {
     fetchUsers(); 
@@ -33,6 +33,7 @@ const UserList = () => {
   const fetchUsers = async () => {
     try {
       const response = await api.get('/auth/users'); 
+      console.log(response);
       setRows(response.data);
     } catch (error) {
       console.error("Erro ao buscar usuários: ", error);

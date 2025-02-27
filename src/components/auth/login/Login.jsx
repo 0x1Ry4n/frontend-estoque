@@ -1,15 +1,15 @@
-import { useState } from 'react';
+import { useState } from 'react'; 
 import {
   Box,
   TextField,
   Button,
   Typography,
-  Link,
   useMediaQuery,
   InputAdornment,
+  IconButton,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { Email, Lock } from '@mui/icons-material';
+import { Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
 import LoginIcon from '@mui/icons-material/Login';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -19,16 +19,15 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const isMobile = useMediaQuery('(max-width:600px)');
   const isTablet = useMediaQuery('(min-width:601px) and (max-width:1200px)');
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
     try {
       const isAuthenticated = await login(email, password);
-
       if (isAuthenticated) {
         navigate('/home');
       } else {
@@ -79,7 +78,7 @@ const Login = () => {
           />
           <TextField
             label="Senha"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             variant="outlined"
             margin="normal"
             fullWidth
@@ -89,6 +88,13 @@ const Login = () => {
               startAdornment: (
                 <InputAdornment position="start">
                   <Lock sx={{ color: '#00796b' }} />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
                 </InputAdornment>
               ),
             }}

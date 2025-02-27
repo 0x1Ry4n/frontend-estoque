@@ -72,8 +72,8 @@ const CreateUser = ({ onUserAdded }) => {
   const verifyFace = async () => {
     try {
       const response = await api.post("/auth/verify-face", {
-        username: "natalialinda",  // Substitua com o nome de usuário real
-        image: userFaceImage,          // A imagem capturada
+        username: "teste12345", 
+        image: userFaceImage,         
       });
 
       if (response.status === 200) {

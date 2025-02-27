@@ -9,6 +9,9 @@ import {
   Snackbar,
   Alert,
   Autocomplete,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import {
   Delete as DeleteIcon,
@@ -36,6 +39,8 @@ const ReceivementList = () => {
     CANCELED: "Cancelado",
     RETURNED: "Retornado",
   };
+
+  console.log(selectedReceivement);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -109,7 +114,8 @@ const ReceivementList = () => {
           description: selectedReceivement.description,
           quantity: selectedReceivement.quantity,
           supplierId: selectedReceivement.supplierId,
-          productId: selectedReceivement.productId, // Corrigido aqui
+          productId: selectedReceivement.productId,
+          status: selectedReceivement.status,
           receivingDate: selectedReceivement.receivingDate,
         });
         setSnackbarMessage("Recebimento atualizado com sucesso!");
@@ -234,6 +240,29 @@ const ReceivementList = () => {
             }
           />
 
+          <Select
+            labelId="status-label"
+            value={selectedReceivement?.status || ""}
+            onChange={(e) =>
+              setSelectedReceivement({
+                ...selectedReceivement,
+                status: e.target.value,
+              })
+            }
+            fullWidth
+            displayEmpty 
+            notched 
+          >
+            <MenuItem value="" disabled>
+              Selecione um status
+            </MenuItem>
+            {Object.entries(receivementStatusMap).map(([key, value]) => (
+              <MenuItem key={key} value={key}>
+                {value}
+              </MenuItem>
+            ))}
+          </Select>
+
           <TextField
             label="Quantidade"
             type="number"
@@ -247,7 +276,7 @@ const ReceivementList = () => {
                 quantity: e.target.value,
               })
             }
-            sx={{ mb: 6 }}
+            sx={{ mb: 3 }}
           />
 
           <Autocomplete
