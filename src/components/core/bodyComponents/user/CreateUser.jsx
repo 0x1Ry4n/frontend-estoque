@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -9,18 +9,20 @@ import {
   Snackbar,
   Alert,
   Grid,
+  Card,
+  CardContent,
 } from "@mui/material";
 import {
   AccountCircle,
   Email,
   Lock,
   Save,
-  PlayArrow,
-  Stop,
+  CameraAlt,
+  Refresh,
 } from "@mui/icons-material";
-import api from "../../../../api";
 import { useForm, Controller } from "react-hook-form";
 import Webcam from "react-webcam";
+import api from '../../../../api';
 
 const CreateUser = ({ onUserAdded }) => {
   const {
@@ -33,12 +35,9 @@ const CreateUser = ({ onUserAdded }) => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
-  // Variáveis para captura de imagem da face
   const webcamRef = useRef(null);
-  const [isCapturingFace, setIsCapturingFace] = useState(false);
-  const [status, setStatus] = useState("Aguardando rosto...");
-  const [userFaceImage, setUserFaceImage] = useState(null); // Variável para armazenar a imagem da face
-  const [faceVerificationStatus, setFaceVerificationStatus] = useState(""); // Status da verificação da face
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [userFaceImage, setUserFaceImage] = useState(null);
 
   const onSubmit = async (data) => {
     try {
@@ -57,9 +56,10 @@ const CreateUser = ({ onUserAdded }) => {
         }
 
         setSnackbarSeverity("success");
-        setSnackbarMessage("Usuário criado com sucesso.");
+        setSnackbarMessage("Usuário criado com sucesso!");
         setSnackbarOpen(true);
         reset();
+        setUserFaceImage(null);
       }
     } catch (error) {
       console.error(error);
@@ -69,281 +69,262 @@ const CreateUser = ({ onUserAdded }) => {
     }
   };
 
-  const verifyFace = async () => {
-    try {
-      const response = await api.post("/auth/verify-face", {
-        username: "teste12345", 
-        image: userFaceImage,         
-      });
-
-      if (response.status === 200) {
-        setFaceVerificationStatus("Rosto verificado com sucesso!");
-        setSnackbarSeverity("success");
-      } else {
-        setFaceVerificationStatus("Falha na verificação do rosto.");
-        setSnackbarSeverity("error");
-      }
-
-      setSnackbarMessage(response.data.message || "Verificação concluída.");
-      setSnackbarOpen(true);
-    } catch (error) {
-      console.error(error);
-      setFaceVerificationStatus("Erro ao verificar rosto.");
-      setSnackbarSeverity("error");
-      setSnackbarMessage("Erro na verificação da face.");
-      setSnackbarOpen(true);
-    }
-  };
-
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
   };
 
-  const captureFace = async () => {
+  const captureFace = () => {
     if (webcamRef.current) {
       const imageSrc = webcamRef.current.getScreenshot();
       setUserFaceImage(imageSrc);
-      setStatus("Rosto capturado, pronto para enviar.");
-      setIsCapturingFace(false);
     }
   };
 
-  useEffect(() => {
-    let interval;
-    if (isCapturingFace) {
-      interval = setInterval(() => {
-        captureFace();
-      }, 1000); // Captura um frame por segundo
-    }
-    return () => clearInterval(interval);
-  }, [isCapturingFace]);
+  const startCamera = () => {
+    setIsCameraActive(true);
+    setUserFaceImage(null);
+  };
 
   return (
-    <Box sx={{ maxWidth: "100%", padding: 3}}>
-      <Paper
-        elevation={4}
-        sx={{ padding: 4, borderRadius: 2, backgroundColor: "#f5f5f5" }}
-      >
+    <Box sx={{ maxWidth: "100%", padding: 3 }}>
+      <Paper elevation={4} sx={{ padding: 10, borderRadius: 3 }}>
         <Typography
           variant="h5"
           sx={{
-            mb: 3,
+            mb: 4,
             fontWeight: "bold",
             display: "flex",
             alignItems: "center",
+            color: "black",
           }}
         >
-          <AccountCircle sx={{ mr: 1 }} />
-          Criar Novo Usuário
+          <AccountCircle sx={{ mr: 2, color: "black" }} />
+          Cadastro de Usuário
         </Typography>
+
         <Box component="form" onSubmit={handleSubmit(onSubmit)}>
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name="username"
-                control={control}
-                defaultValue=""
-                rules={{
-                  required: "O nome de usuário é obrigatório.",
-                  minLength: {
-                    value: 3,
-                    message:
-                      "O nome de usuário deve ter pelo menos 3 caracteres.",
-                  },
-                }}
-                render={({ field }) => (
-                  <TextField
-                    label="Nome de Usuário"
-                    fullWidth
-                    variant="outlined"
-                    {...field}
-                    error={!!errors.username}
-                    helperText={errors.username ? errors.username.message : ""}
-                    sx={{ mb: 2 }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <AccountCircle />
-                        </InputAdornment>
-                      ),
+          <Grid container spacing={4}>
+            <Grid item xs={12} md={6}>
+              <Card variant="outlined" sx={{ mb: 3 }}>
+                <CardContent sx={{ p: 10 }}>
+                  <Typography variant="h6" sx={{ mb: 3, fontWeight: "bold", color: "black" }}>
+                    Informações Pessoais
+                  </Typography>
+
+                  <Controller
+                    name="username"
+                    control={control}
+                    defaultValue=""
+                    rules={{
+                      required: "Nome de usuário obrigatório",
+                      minLength: {
+                        value: 3,
+                        message: "Mínimo 3 caracteres",
+                      },
                     }}
+                    render={({ field }) => (
+                      <TextField
+                        label="Nome de Usuário"
+                        fullWidth
+                        variant="outlined"
+                        {...field}
+                        error={!!errors.username}
+                        helperText={errors.username?.message}
+                        sx={{ mb: 3 }}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <AccountCircle sx={{ mr: 1 }} />
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    )}
                   />
-                )}
-              />
+
+                  <Controller
+                    name="email"
+                    control={control}
+                    defaultValue=""
+                    rules={{
+                      required: "E-mail obrigatório",
+                      pattern: {
+                        value: /\S+@\S+\.\S+/,
+                        message: "E-mail inválido",
+                      },
+                    }}
+                    render={({ field }) => (
+                      <TextField
+                        label="E-mail"
+                        fullWidth
+                        variant="outlined"
+                        {...field}
+                        error={!!errors.email}
+                        helperText={errors.email?.message}
+                        sx={{ mb: 3, mt: 2 }}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <Email sx={{ mr: 1 }} />
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    )}
+                  />
+
+                  <Controller
+                    name="password"
+                    control={control}
+                    defaultValue=""
+                    rules={{
+                      required: "Senha obrigatória",
+                      minLength: {
+                        value: 6,
+                        message: "Mínimo 6 caracteres",
+                      },
+                    }}
+                    render={({ field }) => (
+                      <TextField
+                        label="Senha"
+                        type="password"
+                        fullWidth
+                        variant="outlined"
+                        {...field}
+                        error={!!errors.password}
+                        helperText={errors.password?.message}
+                        sx={{ mb: 2, mt: 2 }}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <Lock sx={{ mr: 1 }} />
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    )}
+                  />
+
+                  <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      size="large"
+                      disabled={!userFaceImage}
+                      sx={{
+                        minWidth: "200px",
+                        py: 1.5,
+                        fontSize: "1rem",
+                      }}
+                      startIcon={<Save />}
+                    >
+                      Finalizar Cadastro
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name="email"
-                control={control}
-                defaultValue=""
-                rules={{
-                  required: "O e-mail é obrigatório.",
-                  pattern: {
-                    value: /\S+@\S+\.\S+/,
-                    message: "O e-mail deve ser válido.",
-                  },
-                }}
-                render={({ field }) => (
-                  <TextField
-                    label="E-mail"
-                    fullWidth
-                    variant="outlined"
-                    {...field}
-                    error={!!errors.email}
-                    helperText={errors.email ? errors.email.message : ""}
-                    sx={{ mb: 2 }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Email />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Controller
-                name="password"
-                control={control}
-                defaultValue=""
-                rules={{
-                  required: "A senha é obrigatória.",
-                  minLength: {
-                    value: 6,
-                    message: "A senha deve ter pelo menos 6 caracteres.",
-                  },
-                }}
-                render={({ field }) => (
-                  <TextField
-                    label="Senha"
-                    type="password"
-                    fullWidth
-                    variant="outlined"
-                    {...field}
-                    error={!!errors.password}
-                    helperText={errors.password ? errors.password.message : ""}
-                    sx={{ mb: 2 }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Lock />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                )}
-              />
+
+            {/* Face Capture Column */}
+            <Grid item xs={12} md={6}>
+              <Card variant="outlined" sx={{ height: "100%" }}>
+                <CardContent sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                  <Typography variant="h6" sx={{ mb: 3, fontWeight: "bold", color: "black" }}>
+                    Cadastro Facial
+                  </Typography>
+
+                  <Box sx={{
+                    flexGrow: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    minHeight: "300px",
+                    backgroundColor: "#f5f5f5",
+                    borderRadius: "8px",
+                    p: 2
+                  }}>
+                    {!isCameraActive && !userFaceImage ? (
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={startCamera}
+                        startIcon={<CameraAlt />}
+                        sx={{ py: 2 }}
+                      >
+                        Iniciar Câmera
+                      </Button>
+                    ) : (
+                      <>
+                        <Box sx={{
+                          width: "100%",
+                          maxWidth: "500px",
+                          mb: 2,
+                          borderRadius: "8px",
+                          overflow: "hidden"
+                        }}>
+                          <Webcam
+                            audio={false}
+                            ref={webcamRef}
+                            screenshotFormat="image/jpeg"
+                            width="100%"
+                            height="auto"
+                            videoConstraints={{ facingMode: "user" }}
+                            style={{
+                              display: userFaceImage ? "none" : "block",
+                              width: "100%"
+                            }}
+                          />
+                          {userFaceImage && (
+                            <img
+                              src={userFaceImage}
+                              alt="Face capturada"
+                              style={{
+                                width: "100%",
+                                borderRadius: "8px",
+                              }}
+                            />
+                          )}
+                        </Box>
+
+                        <Box sx={{ display: "flex", gap: 2 }}>
+                          {!userFaceImage ? (
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              onClick={captureFace}
+                              startIcon={<CameraAlt />}
+                            >
+                              Capturar Foto
+                            </Button>
+                          ) : (
+                            <>
+                              <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={startCamera}
+                                startIcon={<Refresh />}
+                              >
+                                Tirar Outra Foto
+                              </Button>
+                            </>
+                          )}
+                        </Box>
+                      </>
+                    )}
+                  </Box>
+
+                  <Typography variant="body2" sx={{ mt: 2, color: "text.secondary" }}>
+                    {userFaceImage
+                      ? "Foto capturada com sucesso!"
+                      : isCameraActive
+                        ? "Posicione seu rosto e clique em Capturar Foto"
+                        : "Clique para iniciar a câmera"}
+                  </Typography>
+                </CardContent>
+              </Card>
             </Grid>
           </Grid>
-
-          {/* Webcam ou imagem capturada dentro do formulário */}
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
-              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                Configurar Face
-              </Typography>
-              {userFaceImage ? (
-                <img
-                  src={userFaceImage}
-                  alt="Foto Capturada"
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: "400px",
-                    borderRadius: "8px",
-                    marginTop: "20px",
-                    marginBottom: "10px",
-                    display: "block",
-                    marginLeft: "auto",
-                    marginRight: "auto",
-                  }}
-                />
-              ) : (
-                <Webcam
-                  audio={false}
-                  ref={webcamRef}
-                  screenshotFormat="image/jpeg"
-                  width="100%"
-                  videoConstraints={{ facingMode: "user" }}
-                  style={{
-                    maxWidth: "500px",
-                    height: "auto",
-                    marginTop: "20px",
-                    marginBottom: "10px",
-                    marginLeft: "auto",
-                    marginRight: "auto",
-                    borderRadius: "8px",
-                  }}
-                />
-              )}
-              <Button
-                variant="contained"
-                color={isCapturingFace ? "error" : "primary"}
-                onClick={() => {
-                  if (isCapturingFace) {
-                    setIsCapturingFace(false); // Parar captura se estiver gravando
-                  } else {
-                    setIsCapturingFace(true); // Iniciar captura se não estiver
-                    setUserFaceImage(null); // Limpar imagem anterior se houver
-                    setStatus("Aguardando rosto...");
-                  }
-                }}
-                sx={{
-                  mt: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "10px 20px",
-                  borderRadius: "50px",
-                  transition: "background-color 0.3s ease",
-                  "&:hover": {
-                    backgroundColor: isCapturingFace ? "#ff0000" : "#3f51b5",
-                  },
-                }}
-              >
-                {isCapturingFace ? (
-                  <Stop sx={{ mr: 1 }} />
-                ) : (
-                  <PlayArrow sx={{ mr: 1 }} />
-                )}
-                {isCapturingFace ? "Parar Captura" : "Iniciar Captura"}
-              </Button>
-              <Typography variant="body2" sx={{ mt: 2 }}>
-                {status}
-              </Typography>
-              {userFaceImage && (
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  onClick={verifyFace}
-                  sx={{ mt: 2 }}
-                >
-                  Verificar Face
-                </Button>
-              )}
-              <Typography variant="body2" sx={{ mt: 2, fontWeight: "bold" }}>
-                {faceVerificationStatus}
-              </Typography>
-            </Grid>
-          </Grid>
-
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              sx={{
-                width: "100%",
-                maxWidth: "250px",
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <Save sx={{ mr: 1 }} />
-              Criar Usuário
-            </Button>
-          </Box>
         </Box>
       </Paper>
 
@@ -351,6 +332,7 @@ const CreateUser = ({ onUserAdded }) => {
         open={snackbarOpen}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert
           onClose={handleCloseSnackbar}

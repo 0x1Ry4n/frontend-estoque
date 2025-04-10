@@ -1,4 +1,4 @@
-import { useState } from 'react'; 
+import { useState, useRef } from 'react';
 import {
   Box,
   TextField,
@@ -7,25 +7,46 @@ import {
   useMediaQuery,
   InputAdornment,
   IconButton,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
+import { Email, Lock, Visibility, VisibilityOff, Face, CameraAlt } from '@mui/icons-material';
 import LoginIcon from '@mui/icons-material/Login';
 import { useAuth } from '../../../context/AuthContext';
+import Webcam from 'react-webcam';
+import api from '../../../api';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [userType, setUserType] = useState('user');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isVerifyingFace, setIsVerifyingFace] = useState(false);
+  const [faceImage, setFaceImage] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const webcamRef = useRef(null);
 
   const isMobile = useMediaQuery('(max-width:600px)');
-  const isTablet = useMediaQuery('(min-width:601px) and (max-width:1200px)');
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    if (userType === 'user' && !faceImage) {
+      setSnackbarMessage("Por favor, verifique o rosto antes de continuar.");
+      setSnackbarOpen(true);
+      return;
+    }
+
     try {
       const isAuthenticated = await login(email, password);
       if (isAuthenticated) {
@@ -34,95 +55,216 @@ const Login = () => {
         setError('Credenciais inválidas. Verifique seu e-mail e senha.');
       }
     } catch (err) {
-      if (err.response && err.response.status === 401) {
-        setError('Credenciais inválidas. Verifique seu e-mail e senha.');
-      } else {
-        setError('Ocorreu um erro ao tentar entrar. Tente novamente mais tarde.');
-      }
+      setError('Erro ao tentar entrar. Tente novamente mais tarde.');
     }
   };
 
+  const captureFace = () => {
+    if (webcamRef.current) {
+      const imageSrc = webcamRef.current.getScreenshot();
+      setFaceImage(imageSrc);
+    }
+  };
+
+  const verifyFace = async () => {
+    try {
+      const response = await api.post('/auth/verify-face', {
+        email,
+        image: faceImage,
+      });
+  
+      if (response.status === 200) {
+        if (response.data.error) {
+          setSnackbarMessage(`Erro: ${response.data.error}`);
+          setSnackbarOpen(true);
+          setFaceImage(null); 
+          setIsVerifyingFace(false);
+          return;
+        }
+
+        if (!response.data.verified) {
+          setSnackbarMessage(`Rosto incompatível com o cadastro de usuário!`);
+          setSnackbarOpen(true);
+          setFaceImage(null); 
+          setIsVerifyingFace(false);
+          return;
+        }
+  
+        setSnackbarMessage("Rosto verificado com sucesso!");
+        setSnackbarOpen(true);
+        setIsVerifyingFace(false);
+      } else {
+        setSnackbarMessage("Falha na verificação do rosto.");
+        setSnackbarOpen(true);
+        setFaceImage(null); 
+        setIsVerifyingFace(false);
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || "Erro ao verificar rosto.";
+      setSnackbarMessage(errorMessage);
+      setSnackbarOpen(true);
+      setFaceImage(null); 
+      setIsVerifyingFace(false);
+    }
+  };
+  
+  
+
   return (
-    <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" height="100vh" bgcolor="#e0f2f1" px={isMobile ? 2 : isTablet ? 4 : 8}>
-      <Box bgcolor="#ffffff" p={isMobile ? 4 : 6} borderRadius={4} boxShadow={3} width={isMobile ? '90%' : isTablet ? '400px' : '500px'}>
-        <Typography variant="h5" mb={2} textAlign="center" color="#00796b" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-          <LoginIcon sx={{ marginRight: 1, fontSize: '2rem', color: '#00796b' }} />
-          Acesse sua conta
+    <Box display="flex" justifyContent="center" alignItems="center" height="100vh" bgcolor="#e0f2f1" px={2} >
+      <Box bgcolor="#fff" p={isMobile ? 4 : 6} borderRadius={4} boxShadow={4} width={isMobile ? '90%' : '425px'}>
+        <Typography variant="h5" mb={3} textAlign="center" color="#00796b" fontWeight="bold">
+          <LoginIcon sx={{ mr: 1 }} /> Acesse sua conta
         </Typography>
+
         {error && (
           <Typography color="error" mb={2} textAlign="center">
             {error}
           </Typography>
         )}
-        <form onSubmit={handleLogin}>
-          <TextField
-            label="Email"
-            type="email"
-            variant="outlined"
-            margin="normal"
-            fullWidth
-            onChange={(e) => setEmail(e.target.value)}
-            value={email}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Email sx={{ color: '#00796b' }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              input: { color: '#00796b' },
-              fieldset: { borderColor: '#00796b' },
-              mb: 2,
-            }}
-          />
-          <TextField
-            label="Senha"
-            type={showPassword ? 'text' : 'password'}
-            variant="outlined"
-            margin="normal"
-            fullWidth
-            onChange={(e) => setPassword(e.target.value)}
-            value={password}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Lock sx={{ color: '#00796b' }} />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              input: { color: '#00796b' },
-              fieldset: { borderColor: '#00796b' },
-              mb: 2,
-            }}
-          />
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            fullWidth
-            sx={{
-              mt: 2,
-              bgcolor: '#00796b',
-              '&:hover': {
-                bgcolor: '#004d40',
-                transition: 'background-color 0.3s ease',
-              },
-              padding: '12px',
-              fontSize: '1rem',
-            }}
+
+        {!isVerifyingFace ? (
+          <form onSubmit={handleLogin}>
+            <FormControl fullWidth margin="normal">
+              <InputLabel id="user-type-label">Tipo de Login</InputLabel>
+              <Select
+                labelId="user-type-label"
+                value={userType}
+                onChange={(e) => setUserType(e.target.value)}
+                label="Tipo de Login"
+              >
+                <MenuItem value="admin">Admin</MenuItem>
+                <MenuItem value="user">Usuário</MenuItem>
+              </Select>
+            </FormControl>
+
+            <TextField
+              label="Email"
+              type="email"
+              fullWidth
+              variant="outlined"
+              margin="normal"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Email sx={{ color: '#00796b' }} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            <TextField
+              label="Senha"
+              type={showPassword ? 'text' : 'password'}
+              fullWidth
+              variant="outlined"
+              margin="normal"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Lock sx={{ color: '#00796b' }} />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            {userType === 'user' && (
+              <Button
+                variant={faceImage ? "contained" : "outlined"}
+                color={faceImage ? "success" : "secondary"}
+                fullWidth
+                sx={{ mt: 2, py: 1.2 }}
+                onClick={() => setIsVerifyingFace(true)}
+                startIcon={<Face />}
+              >
+                {faceImage ? "Rosto capturado" : "Iniciar Reconhecimento Facial"}
+              </Button>
+            )}
+
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              fullWidth
+              sx={{ mt: 2, bgcolor: '#00796b', '&:hover': { bgcolor: '#004d40' }, py: 1.5 }}
+              disabled={userType === 'user' && !faceImage}
+            >
+              Entrar
+            </Button>
+
+          </form>
+        ) : (
+          <Box>
+            <Typography variant="h6" fontWeight="bolder" textAlign="center" mb={2}>
+              Verificação Facial
+            </Typography>
+
+            {faceImage ? (
+              <Box textAlign="center">
+                <img
+                  src={faceImage}
+                  alt="Face capturada"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '300px',
+                    borderRadius: 8,
+                    marginBottom: 16,
+                  }}
+                />
+                <Box display="flex" justifyContent="center" gap={2}>
+                  <Button variant="contained" onClick={verifyFace} startIcon={<Face />} color="success">
+                    Verificar
+                  </Button>
+                  <Button variant="outlined" onClick={() => setFaceImage(null)} startIcon={<CameraAlt />}>
+                    Capturar Novamente
+                  </Button>
+                </Box>
+              </Box>
+            ) : (
+              <Box textAlign="center">
+                <Webcam
+                  ref={webcamRef}
+                  audio={false}
+                  screenshotFormat="image/jpeg"
+                  width="100%"
+                  videoConstraints={{ facingMode: 'user' }}
+                  style={{ maxWidth: '100%', borderRadius: 8, marginBottom: 16 }}
+                />
+                <Button variant="contained" onClick={captureFace} startIcon={<CameraAlt />} sx={{ py: 1.2 }}>
+                  Capturar Foto
+                </Button>
+              </Box>
+            )}
+
+            <Button fullWidth sx={{ mt: 2 }} onClick={() => setIsVerifyingFace(false)}>
+              Voltar para Login
+            </Button>
+          </Box>
+        )}
+
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={6000}
+          onClose={() => setSnackbarOpen(false)}
+        >
+          <Alert
+            onClose={() => setSnackbarOpen(false)}
+            severity={snackbarMessage.includes('sucesso') ? 'success' : 'error'}
           >
-            Entrar
-          </Button>
-        </form>
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
       </Box>
     </Box>
   );

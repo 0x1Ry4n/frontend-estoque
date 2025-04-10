@@ -71,10 +71,12 @@ const Categories = () => {
         await api.delete(`/category/${ids[0]}`);
         setSnackbarMessage("Categoria deletada com sucesso!");
         setSnackbarSeverity("success");
-        fetchCategories(); // Atualiza a lista após deletar
+        fetchCategories(); 
       } catch (error) {
         setSnackbarMessage(
-          "Erro ao deletar categoria: " + error.response.data.message
+          `Erro ao deletar a categoria: ${
+            error.response?.data?.error || error.message
+          }`
         );
         setSnackbarSeverity("error");
       } finally {
@@ -103,9 +105,13 @@ const Categories = () => {
         setSnackbarMessage("Categoria adicionada com sucesso!");
       }
       setSnackbarSeverity("success");
-      fetchCategories(); // Atualiza a lista após salvar
+      fetchCategories(); 
     } catch (error) {
-      setSnackbarMessage("Erro ao salvar categoria.");
+      setSnackbarMessage(
+        `Erro ao salvar a categoria: ${
+          error.response?.data?.error || error.message
+        }`
+      );
       setSnackbarSeverity("error");
     } finally {
       handleClose();
@@ -114,7 +120,7 @@ const Categories = () => {
   };
 
   const handleRefresh = () => {
-    fetchCategories(); // Atualiza a lista ao clicar no botão de refresh
+    fetchCategories(); 
     setSnackbarMessage("Lista de categorias atualizada!");
     setSnackbarSeverity("info");
     setSnackbarOpen(true);
@@ -152,7 +158,7 @@ const Categories = () => {
       <Button
         variant="outlined"
         startIcon={<RefreshIcon />}
-        onClick={handleRefresh} // Botão para atualizar a lista manualmente
+        onClick={handleRefresh} 
         sx={{ mb: 2 }}
       >
         Atualizar Lista

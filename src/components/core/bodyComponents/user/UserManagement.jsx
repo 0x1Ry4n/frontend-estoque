@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import CreateUser from './CreateUser'; 
-import UserList from './Userlist';
+import UserList from './UserList';
 import { Box, Typography } from '@mui/material';
 
 const UserManagement = () => {

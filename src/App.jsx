@@ -14,7 +14,7 @@ import Growth from "./components/core/bodyComponents/growth/Growth";
 import Report from "./components/core/bodyComponents/report/Report";
 import Setting from "./components/core/bodyComponents/settings/Setting";
 import Login from "./components/auth/login/Login";
-import PrivateRoute from './components/auth/privateRoute'; 
+import PrivateRoute from './components/auth/privateRoute';
 import ProductManagement from "./components/core/bodyComponents/product/ProductManagement";
 import CategoryManagement from "./components/core/bodyComponents/category/CategoryManagement";
 import CustomerManagement from "./components/core/bodyComponents/customer/CustomerManagement";
@@ -56,7 +56,7 @@ function App() {
   });
 
   const isAuthenticated = () => {
-    return localStorage.getItem('token'); 
+    return localStorage.getItem('token');
   };
 
   const router = createBrowserRouter(
@@ -69,7 +69,7 @@ function App() {
           <Route path="/calendar" element={<CalendarWithNotes />} />
           <Route path="/maps" element={<MapComponent />} />
           <Route path="/user" element={<UserProfile />} />
-          <Route path="/create-user" element={<UserManagement />} /> 
+          <Route path="/create-user" element={<PrivateRoute onlyAdmin={true}> <UserManagement/> </PrivateRoute>} />          
           <Route path="/categories" element={<CategoryManagement />} />
           <Route path="/suppliers" element={<SupplierManagement />} />
           <Route path="/products" element={<ProductManagement />} />

@@ -91,9 +91,10 @@ const Suppliers = () => {
         setSnackbarMessage("Fornecedor deletado com sucesso!");
         setSnackbarSeverity("success");
       } catch (error) {
+        console.log(error);
         setSnackbarMessage(
           `Erro ao deletar fornecedor: ${
-            error.response?.data?.message || error.message
+            error.response?.data?.error || error.message
           }`
         );
         setSnackbarSeverity("error");
@@ -106,7 +107,6 @@ const Suppliers = () => {
   const handleSave = async () => {
     const { socialReason, cnpj, communicationPreference } = selectedSupplier;
 
-    // Verifica se todos os campos obrigatórios estão preenchidos
     if (!socialReason || !cnpj || !communicationPreference) {
       setSnackbarMessage("Por favor, preencha todos os campos obrigatórios!");
       setSnackbarSeverity("error");
@@ -132,7 +132,7 @@ const Suppliers = () => {
     } catch (error) {
       setSnackbarMessage(
         `Erro ao salvar fornecedor: ${
-          error.response?.data?.message || error.message
+          error.response?.data?.error || error.message
         }`
       );
       setSnackbarSeverity("error");

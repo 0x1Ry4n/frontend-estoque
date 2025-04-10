@@ -25,11 +25,9 @@ import { useNavigate } from "react-router-dom";
 import api from '../api'; 
 
 export default function NavBarComponent() {
-  const [notificationAnchorEl, setNotificationAnchorEl] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const [user, setUser] = useState(null); 
   const open = Boolean(anchorEl);
-  const notificationOpen = Boolean(notificationAnchorEl);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -49,16 +47,8 @@ export default function NavBarComponent() {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleNotificationClicked = (event) => {
-    setNotificationAnchorEl(event.currentTarget);
-  };
-
   const handleClose = () => {
     setAnchorEl(null);
-  };
-
-  const notificationHandleClose = () => {
-    setNotificationAnchorEl(null);
   };
 
   const handleProfileClick = () => {
@@ -89,25 +79,6 @@ export default function NavBarComponent() {
                     ml: "auto",
                   }}
                 >
-                  <IconButton color="inherit">
-                    <Badge variant="dot" color="error" invisible={false}>
-                      <NotificationsOutlined
-                        sx={{ width: 32, height: 32 }}
-                        onClick={handleNotificationClicked}
-                      />
-                    </Badge>
-                  </IconButton>
-                  <Menu
-                    open={notificationOpen}
-                    anchorEl={notificationAnchorEl}
-                    onClick={notificationHandleClose}
-                    onClose={notificationHandleClose}
-                  >
-                    <MenuItem>Notification number 1 </MenuItem>
-                    <Divider />
-                    <MenuItem>Notification number 2</MenuItem>
-                    <MenuItem>Notification number 3</MenuItem>
-                  </Menu>
                   <IconButton
                     onClick={handleAvatarClicked}
                     size="small"

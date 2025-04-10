@@ -34,7 +34,14 @@ const UserList = () => {
     try {
       const response = await api.get('/auth/users'); 
       console.log(response);
-      setRows(response.data);
+  
+      const formattedUsers = response.data.map(user => ({
+        ...user,
+        role: user.role === "ADMIN" ? "Administrador" : "Usuário Comum",
+        status: user.status === "ACTIVE" ? "Ativo" : "Inativo"
+      }));
+  
+      setRows(formattedUsers);
     } catch (error) {
       console.error("Erro ao buscar usuários: ", error);
       setSnackbarMessage("Erro ao carregar usuários.");

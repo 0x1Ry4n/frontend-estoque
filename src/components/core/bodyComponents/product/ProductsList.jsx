@@ -111,7 +111,9 @@ const Products = () => {
       } catch (error) {
         console.log(error);
         setSnackbarMessage(
-          "Erro ao deletar produto: " + error.response.data.message
+          `Erro ao deletar o produto: ${
+            error.response?.data?.error || error.message
+          }`
         );
         setSnackbarSeverity("error");
       } finally {
@@ -143,7 +145,11 @@ const Products = () => {
       }
       setSnackbarSeverity("success");
     } catch (error) {
-      setSnackbarMessage("Erro ao salvar produto.");
+      setSnackbarMessage(
+        `Erro ao salvar o produto: ${
+          error.response?.data?.error || error.message
+        }`
+      );      
       setSnackbarSeverity("error");
     } finally {
       handleClose();

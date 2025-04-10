@@ -24,18 +24,25 @@ import {
   CreditCardOutlined,
   GroupOutlined,
   ShowChartOutlined,
-  SettingsOutlined,
   ExpandMore,
   ExpandLess,
   Menu as MenuIcon,
   Inventory2Outlined,
 } from "@mui/icons-material";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function SideBarComponent() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const currentPage = location.pathname;
+
+  const isSmallScreen = useMediaQuery("(max-width:600px)"); 
+
+  const [selected, setSelected] = useState(0);
+  const [open, setOpen] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const sideBarComponent = [
     { title: "Home", route: "home", component: <HomeOutlined /> },
@@ -52,10 +59,9 @@ export default function SideBarComponent() {
     { title: "Crescimento", route: "growth", component: <ShowChartOutlined /> },
   ];  
 
-  const [selected, setSelected] = useState(0);
-  const [open, setOpen] = useState(true);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const isSmallScreen = useMediaQuery("(max-width:600px)");
+  const filteredSideBarComponent = user?.role === "USER"
+    ? sideBarComponent.filter((item) => item.title !== "Usuários")
+    : sideBarComponent;
 
   const handleSelectedComponent = (index) => {
     setSelected(index);
@@ -71,7 +77,7 @@ export default function SideBarComponent() {
 
   const SidebarContent = (
     <List>
-      {sideBarComponent.map((comp, index) => (
+      {filteredSideBarComponent.map((comp, index) => (
         <ListItem disablePadding key={index}>
           <Box width="100%">
             <ListItemButton

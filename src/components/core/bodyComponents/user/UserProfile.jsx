@@ -27,7 +27,7 @@ const UserProfile = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    navigate('/login'); 
+    navigate('/login');
   };
 
   if (loading) {
@@ -67,19 +67,19 @@ const UserProfile = () => {
           </Grid>
           <Grid item xs={12}>
             <Typography variant="body1" align="center" sx={{ color: '#757575' }}>
-              <strong>Papel:</strong> {user?.role}
+              <strong>Tipo:</strong> {user?.role === "ADMIN" ? "Administrador" : "Usuário Comum"}
             </Typography>
           </Grid>
           <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-            <Button 
-              variant="contained" 
-              color="primary" 
-              onClick={handleLogout} 
-              sx={{ 
-                bgcolor: '#00796b', 
-                '&:hover': { bgcolor: '#004d40' }, 
-                borderRadius: '20px', 
-                px: 4 
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleLogout}
+              sx={{
+                bgcolor: '#00796b',
+                '&:hover': { bgcolor: '#004d40' },
+                borderRadius: '20px',
+                px: 4
               }}
             >
               Logout
