@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -21,6 +21,7 @@ import {
   Refresh,
 } from "@mui/icons-material";
 import { useForm, Controller } from "react-hook-form";
+import * as faceapi from 'face-api.js';
 import Webcam from "react-webcam";
 import api from '../../../../api';
 
@@ -31,6 +32,7 @@ const CreateUser = ({ onUserAdded }) => {
     reset,
     formState: { errors },
   } = useForm();
+
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
@@ -38,6 +40,11 @@ const CreateUser = ({ onUserAdded }) => {
   const webcamRef = useRef(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [userFaceImage, setUserFaceImage] = useState(null);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+
+  const canvasRef = useRef(null);
+  const [isFaceDetected, setIsFaceDetected] = useState(false);
+  const detectionInterval = useRef(null);
 
   const onSubmit = async (data) => {
     try {
@@ -50,7 +57,7 @@ const CreateUser = ({ onUserAdded }) => {
         faceImage: userFaceImage,
       });
 
-      if (response.status === 200) {
+      if (response.status === 201) {
         if (typeof onUserAdded === "function") {
           onUserAdded(response.data);
         }
@@ -61,11 +68,14 @@ const CreateUser = ({ onUserAdded }) => {
         reset();
         setUserFaceImage(null);
       }
+
     } catch (error) {
-      console.error(error);
-      setSnackbarMessage("Erro ao criar usuário");
+      let message = error.response?.data?.error || "Erro desconhecido ao criar o usuário.";
+      
       setSnackbarSeverity("error");
+      setSnackbarMessage(message);
       setSnackbarOpen(true);
+      setUserFaceImage(null);
     }
   };
 
@@ -73,16 +83,86 @@ const CreateUser = ({ onUserAdded }) => {
     setSnackbarOpen(false);
   };
 
-  const captureFace = () => {
-    if (webcamRef.current) {
-      const imageSrc = webcamRef.current.getScreenshot();
-      setUserFaceImage(imageSrc);
+  useEffect(() => {
+    const loadModels = async () => {
+      try {
+        await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+        await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
+        setModelsLoaded(true);
+        console.log('Modelos carregados com sucesso!');
+      } catch (error) {
+        console.error('Erro ao carregar modelos:', error);
+      }
+    };
+    loadModels();
+
+    return () => {
+      if (detectionInterval.current) {
+        clearInterval(detectionInterval.current);
+      }
+    };
+  }, []);
+
+  const detectFace = async () => {
+    if (!webcamRef.current || !canvasRef.current || !modelsLoaded) return;
+
+    const video = webcamRef.current.video;
+    const canvas = canvasRef.current;
+    
+    if (video.readyState !== 4) return; 
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const detections = await faceapi.detectAllFaces(
+      video, 
+      new faceapi.TinyFaceDetectorOptions()
+    ).withFaceLandmarks();
+    
+    const context = canvas.getContext('2d');
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    
+    if (detections.length > 0) {
+      setIsFaceDetected(true);
+      faceapi.draw.drawDetections(canvas, detections);
+      faceapi.draw.drawFaceLandmarks(canvas, detections);
+    } else {
+      setIsFaceDetected(false);
     }
   };
 
-  const startCamera = () => {
+  const startCamera = async () => {
     setIsCameraActive(true);
     setUserFaceImage(null);
+    
+    if (detectionInterval.current) {
+      clearInterval(detectionInterval.current);
+    }
+    detectionInterval.current = setInterval(detectFace, 300);
+  };
+
+  const stopCamera = () => {
+    if (detectionInterval.current) {
+      clearInterval(detectionInterval.current);
+      detectionInterval.current = null;
+    }
+    setIsCameraActive(false);
+  };
+
+  const captureFace = async () => {
+    if (webcamRef.current && isFaceDetected) {
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      
+      const imageSrc = webcamRef.current.getScreenshot();
+      setUserFaceImage(imageSrc);
+      
+      if (detectionInterval.current) {
+        clearInterval(detectionInterval.current);
+        detectionInterval.current = null;
+      }
+    }
   };
 
   return (
@@ -225,7 +305,6 @@ const CreateUser = ({ onUserAdded }) => {
               </Card>
             </Grid>
 
-            {/* Face Capture Column */}
             <Grid item xs={12} md={6}>
               <Card variant="outlined" sx={{ height: "100%" }}>
                 <CardContent sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
@@ -251,17 +330,19 @@ const CreateUser = ({ onUserAdded }) => {
                         onClick={startCamera}
                         startIcon={<CameraAlt />}
                         sx={{ py: 2 }}
+                        disabled={!modelsLoaded}
                       >
-                        Iniciar Câmera
+                        {modelsLoaded ? "Iniciar Câmera" : "Carregando modelos..."}
                       </Button>
                     ) : (
                       <>
                         <Box sx={{
                           width: "100%",
-                          maxWidth: "500px",
+                          maxWidth: "600px",
                           mb: 2,
                           borderRadius: "8px",
-                          overflow: "hidden"
+                          overflow: "hidden",
+                          position: 'relative',
                         }}>
                           <Webcam
                             audio={false}
@@ -269,10 +350,27 @@ const CreateUser = ({ onUserAdded }) => {
                             screenshotFormat="image/jpeg"
                             width="100%"
                             height="auto"
-                            videoConstraints={{ facingMode: "user" }}
+                            videoConstraints={{ 
+                              facingMode: "user",
+                              width: { ideal: 1280 },
+                              height: { ideal: 720 }
+                            }}
                             style={{
                               display: userFaceImage ? "none" : "block",
-                              width: "100%"
+                              width: "100%",
+                              height: "auto"
+                            }}
+                            mirrored={true}
+                          />
+                          <canvas
+                            ref={canvasRef}
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              width: '100%',
+                              height: '100%',
+                              pointerEvents: 'none'
                             }}
                           />
                           {userFaceImage && (
@@ -281,6 +379,7 @@ const CreateUser = ({ onUserAdded }) => {
                               alt="Face capturada"
                               style={{
                                 width: "100%",
+                                height: "auto",
                                 borderRadius: "8px",
                               }}
                             />
@@ -294,20 +393,19 @@ const CreateUser = ({ onUserAdded }) => {
                               color="primary"
                               onClick={captureFace}
                               startIcon={<CameraAlt />}
+                              disabled={!isFaceDetected}
                             >
-                              Capturar Foto
+                              {isFaceDetected ? "Capturar Foto" : "Nenhum rosto detectado"}
                             </Button>
                           ) : (
-                            <>
-                              <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={startCamera}
-                                startIcon={<Refresh />}
-                              >
-                                Tirar Outra Foto
-                              </Button>
-                            </>
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              onClick={startCamera}
+                              startIcon={<Refresh />}
+                            >
+                              Tirar Outra Foto
+                            </Button>
                           )}
                         </Box>
                       </>
@@ -318,7 +416,9 @@ const CreateUser = ({ onUserAdded }) => {
                     {userFaceImage
                       ? "Foto capturada com sucesso!"
                       : isCameraActive
-                        ? "Posicione seu rosto e clique em Capturar Foto"
+                        ? isFaceDetected
+                          ? "Rosto detectado! Clique em Capturar Foto"
+                          : "Posicione seu rosto na câmera"
                         : "Clique para iniciar a câmera"}
                   </Typography>
                 </CardContent>

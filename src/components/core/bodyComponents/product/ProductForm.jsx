@@ -117,7 +117,7 @@ const ProductForm = ({ onProductAdded }) => {
     <Box>
       <Paper
         elevation={4}
-        sx={{ padding: 4, borderRadius: 2, backgroundColor: "#f5f5f5", width: "95%"}}
+        sx={{ padding: 10, borderRadius: 2, backgroundColor: "#f5f5f5", width: "95%"}}
       >
         <Typography
           variant="h5"

@@ -60,8 +60,8 @@ const SupplierForm = ({ onSupplierAdded }) => {
       <Paper
         elevation={4}
         sx={{
-          padding: 4,
-          borderRadius: 2,
+          padding: 10,
+          borderRadius: 3,
           backgroundColor: "#f5f5f5",
           width: "95%",
         }}

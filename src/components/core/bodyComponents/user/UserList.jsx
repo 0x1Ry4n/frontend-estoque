@@ -33,8 +33,6 @@ const UserList = () => {
   const fetchUsers = async () => {
     try {
       const response = await api.get('/auth/users'); 
-      console.log(response);
-  
       const formattedUsers = response.data.map(user => ({
         ...user,
         role: user.role === "ADMIN" ? "Administrador" : "Usuário Comum",

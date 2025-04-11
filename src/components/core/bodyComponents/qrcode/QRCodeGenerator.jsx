@@ -68,7 +68,7 @@ const QRCodeGenerator = () => {
             mt: 10,
             height: '100vh',
         }}>
-      <Paper elevation={4} sx={{ padding: 4, borderRadius: 2, backgroundColor: '#f5f5f5', width: '95%' }}>
+      <Paper elevation={4} sx={{ padding: 10, borderRadius: 2, backgroundColor: '#f5f5f5', width: '95%' }}>
         <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', textAlign: 'center'  }}>
           Gerar Vários QR Codes
         </Typography>
