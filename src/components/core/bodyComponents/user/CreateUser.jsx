@@ -11,6 +11,8 @@ import {
   Grid,
   Card,
   CardContent,
+  CircularProgress,
+  IconButton,
 } from "@mui/material";
 import {
   AccountCircle,
@@ -19,11 +21,13 @@ import {
   Save,
   CameraAlt,
   Refresh,
+  Visibility,
+  VisibilityOff,
 } from "@mui/icons-material";
 import { useForm, Controller } from "react-hook-form";
-import * as faceapi from 'face-api.js';
+import * as faceapi from "face-api.js";
 import Webcam from "react-webcam";
-import api from '../../../../api';
+import api from "../../../../api";
 
 const CreateUser = ({ onUserAdded }) => {
   const {
@@ -36,18 +40,137 @@ const CreateUser = ({ onUserAdded }) => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Face detection state
   const webcamRef = useRef(null);
+  const canvasRef = useRef(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [userFaceImage, setUserFaceImage] = useState(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
-
-  const canvasRef = useRef(null);
   const [isFaceDetected, setIsFaceDetected] = useState(false);
+  const [detectionScore, setDetectionScore] = useState(0);
+  const [faceDetection, setFaceDetection] = useState(null);
   const detectionInterval = useRef(null);
+
+  useEffect(() => {
+    const loadModels = async () => {
+      try {
+        setIsLoading(true);
+        const MODEL_URL = "/models";
+
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+        ]);
+
+        setModelsLoaded(true);
+      } catch (error) {
+        console.error("Erro ao carregar modelos:", error);
+        setSnackbarMessage("Erro ao carregar modelos de reconhecimento facial");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadModels();
+
+    return () => {
+      if (detectionInterval.current) {
+        clearInterval(detectionInterval.current);
+      }
+    };
+  }, []);
+
+  const detectFaces = async () => {
+    if (!webcamRef.current || !canvasRef.current || !modelsLoaded) return;
+
+    const video = webcamRef.current.video;
+    if (!video || video.readyState !== 4) return;
+
+    const detections = await faceapi
+      .detectAllFaces(
+        video,
+        new faceapi.TinyFaceDetectorOptions({
+          inputSize: 512,
+          scoreThreshold: 0.5,
+        })
+      )
+      .withFaceLandmarks()
+      .withFaceDescriptors();
+
+    const canvas = canvasRef.current;
+    const displaySize = { width: video.width, height: video.height };
+    faceapi.matchDimensions(canvas, displaySize);
+
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (detections.length > 0) {
+      const resizedDetections = faceapi.resizeResults(detections, displaySize);
+      faceapi.draw.drawDetections(canvas, resizedDetections);
+      faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+
+      setDetectionScore(detections[0].detection.score.toFixed(2));
+      setFaceDetection(detections[0]);
+      setIsFaceDetected(true);
+    } else {
+      setFaceDetection(null);
+      setDetectionScore(0);
+      setIsFaceDetected(false);
+    }
+  };
+
+  const startCamera = () => {
+    setIsCameraActive(true);
+    setUserFaceImage(null);
+    
+    if (detectionInterval.current) {
+      clearInterval(detectionInterval.current);
+    }
+    detectionInterval.current = setInterval(detectFaces, 300);
+  };
+
+  const stopCamera = () => {
+    if (detectionInterval.current) {
+      clearInterval(detectionInterval.current);
+      detectionInterval.current = null;
+    }
+    setIsCameraActive(false);
+  };
+
+  const captureFace = () => {
+    if (webcamRef.current && faceDetection) {
+      const imageSrc = webcamRef.current.getScreenshot();
+      setUserFaceImage(imageSrc);
+
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      stopCamera();
+    } else {
+      setSnackbarMessage("Nenhum rosto detectado. Posicione-se melhor.");
+      setSnackbarSeverity("warning");
+      setSnackbarOpen(true);
+    }
+  };
 
   const onSubmit = async (data) => {
     try {
+      if (!userFaceImage) {
+        setSnackbarMessage("Por favor, capture uma imagem facial antes de continuar.");
+        setSnackbarSeverity("warning");
+        setSnackbarOpen(true);
+        return;
+      }
+
+      setIsLoading(true);
+
       const response = await api.post("/auth/register/user", {
         username: data.username,
         email: data.email,
@@ -68,106 +191,20 @@ const CreateUser = ({ onUserAdded }) => {
         reset();
         setUserFaceImage(null);
       }
-
     } catch (error) {
-      let message = error.response?.data?.error || "Erro desconhecido ao criar o usuário.";
-      
+      const errorMessage =
+        error.response?.data?.error || "Erro ao criar usuário. Tente novamente.";
       setSnackbarSeverity("error");
-      setSnackbarMessage(message);
+      setSnackbarMessage(errorMessage);
       setSnackbarOpen(true);
-      setUserFaceImage(null);
-    }
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbarOpen(false);
-  };
-
-  useEffect(() => {
-    const loadModels = async () => {
-      try {
-        await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
-        await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
-        setModelsLoaded(true);
-        console.log('Modelos carregados com sucesso!');
-      } catch (error) {
-        console.error('Erro ao carregar modelos:', error);
-      }
-    };
-    loadModels();
-
-    return () => {
-      if (detectionInterval.current) {
-        clearInterval(detectionInterval.current);
-      }
-    };
-  }, []);
-
-  const detectFace = async () => {
-    if (!webcamRef.current || !canvasRef.current || !modelsLoaded) return;
-
-    const video = webcamRef.current.video;
-    const canvas = canvasRef.current;
-    
-    if (video.readyState !== 4) return; 
-    
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    const detections = await faceapi.detectAllFaces(
-      video, 
-      new faceapi.TinyFaceDetectorOptions()
-    ).withFaceLandmarks();
-    
-    const context = canvas.getContext('2d');
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    
-    if (detections.length > 0) {
-      setIsFaceDetected(true);
-      faceapi.draw.drawDetections(canvas, detections);
-      faceapi.draw.drawFaceLandmarks(canvas, detections);
-    } else {
-      setIsFaceDetected(false);
-    }
-  };
-
-  const startCamera = async () => {
-    setIsCameraActive(true);
-    setUserFaceImage(null);
-    
-    if (detectionInterval.current) {
-      clearInterval(detectionInterval.current);
-    }
-    detectionInterval.current = setInterval(detectFace, 300);
-  };
-
-  const stopCamera = () => {
-    if (detectionInterval.current) {
-      clearInterval(detectionInterval.current);
-      detectionInterval.current = null;
-    }
-    setIsCameraActive(false);
-  };
-
-  const captureFace = async () => {
-    if (webcamRef.current && isFaceDetected) {
-      const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      
-      const imageSrc = webcamRef.current.getScreenshot();
-      setUserFaceImage(imageSrc);
-      
-      if (detectionInterval.current) {
-        clearInterval(detectionInterval.current);
-        detectionInterval.current = null;
-      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <Box sx={{ maxWidth: "100%", padding: 3 }}>
-      <Paper elevation={4} sx={{ padding: 10, borderRadius: 3 }}>
+      <Paper elevation={4} sx={{ padding: 4, borderRadius: 3 }}>
         <Typography
           variant="h5"
           sx={{
@@ -175,10 +212,10 @@ const CreateUser = ({ onUserAdded }) => {
             fontWeight: "bold",
             display: "flex",
             alignItems: "center",
-            color: "black",
+            color: "primary.main",
           }}
         >
-          <AccountCircle sx={{ mr: 2, color: "black" }} />
+          <AccountCircle sx={{ mr: 2 }} />
           Cadastro de Usuário
         </Typography>
 
@@ -186,8 +223,8 @@ const CreateUser = ({ onUserAdded }) => {
           <Grid container spacing={4}>
             <Grid item xs={12} md={6}>
               <Card variant="outlined" sx={{ mb: 3 }}>
-                <CardContent sx={{ p: 10 }}>
-                  <Typography variant="h6" sx={{ mb: 3, fontWeight: "bold", color: "black" }}>
+                <CardContent>
+                  <Typography variant="h6" sx={{ mb: 3, fontWeight: "bold" }}>
                     Informações Pessoais
                   </Typography>
 
@@ -214,7 +251,7 @@ const CreateUser = ({ onUserAdded }) => {
                         InputProps={{
                           startAdornment: (
                             <InputAdornment position="start">
-                              <AccountCircle sx={{ mr: 1 }} />
+                              <AccountCircle />
                             </InputAdornment>
                           ),
                         }}
@@ -241,11 +278,11 @@ const CreateUser = ({ onUserAdded }) => {
                         {...field}
                         error={!!errors.email}
                         helperText={errors.email?.message}
-                        sx={{ mb: 3, mt: 2 }}
+                        sx={{ mb: 3 }}
                         InputProps={{
                           startAdornment: (
                             <InputAdornment position="start">
-                              <Email sx={{ mr: 1 }} />
+                              <Email />
                             </InputAdornment>
                           ),
                         }}
@@ -267,62 +304,75 @@ const CreateUser = ({ onUserAdded }) => {
                     render={({ field }) => (
                       <TextField
                         label="Senha"
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         fullWidth
                         variant="outlined"
                         {...field}
                         error={!!errors.password}
                         helperText={errors.password?.message}
-                        sx={{ mb: 2, mt: 2 }}
+                        sx={{ mb: 2 }}
                         InputProps={{
                           startAdornment: (
                             <InputAdornment position="start">
-                              <Lock sx={{ mr: 1 }} />
+                              <Lock />
+                            </InputAdornment>
+                          ),
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                onClick={() => setShowPassword(!showPassword)}
+                                edge="end"
+                              >
+                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                              </IconButton>
                             </InputAdornment>
                           ),
                         }}
                       />
                     )}
                   />
-
-                  <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      size="large"
-                      disabled={!userFaceImage}
-                      sx={{
-                        minWidth: "200px",
-                        py: 1.5,
-                        fontSize: "1rem",
-                      }}
-                      startIcon={<Save />}
-                    >
-                      Finalizar Cadastro
-                    </Button>
-                  </Box>
                 </CardContent>
               </Card>
+
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  size="large"
+                  disabled={!userFaceImage || isLoading}
+                  sx={{
+                    minWidth: "200px",
+                    py: 1.5,
+                    fontSize: "1rem",
+                  }}
+                  startIcon={isLoading ? <CircularProgress size={24} /> : <Save />}
+                >
+                  Finalizar Cadastro
+                </Button>
+              </Box>
             </Grid>
 
             <Grid item xs={12} md={6}>
               <Card variant="outlined" sx={{ height: "100%" }}>
                 <CardContent sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-                  <Typography variant="h6" sx={{ mb: 3, fontWeight: "bold", color: "black" }}>
+                  <Typography variant="h6" sx={{ mb: 3, fontWeight: "bold" }}>
                     Cadastro Facial
                   </Typography>
 
-                  <Box sx={{
-                    flexGrow: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    minHeight: "300px",
-                    backgroundColor: "#f5f5f5",
-                    borderRadius: "8px",
-                    p: 2
-                  }}>
+                  <Box
+                    sx={{
+                      flexGrow: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      minHeight: "300px",
+                      backgroundColor: "#f5f5f5",
+                      borderRadius: "8px",
+                      p: 2,
+                      position: "relative",
+                    }}
+                  >
                     {!isCameraActive && !userFaceImage ? (
                       <Button
                         variant="contained"
@@ -330,85 +380,104 @@ const CreateUser = ({ onUserAdded }) => {
                         onClick={startCamera}
                         startIcon={<CameraAlt />}
                         sx={{ py: 2 }}
-                        disabled={!modelsLoaded}
+                        disabled={!modelsLoaded || isLoading}
                       >
                         {modelsLoaded ? "Iniciar Câmera" : "Carregando modelos..."}
+                        {isLoading && <CircularProgress size={24} sx={{ ml: 1 }} />}
                       </Button>
+                    ) : userFaceImage ? (
+                      <Box textAlign="center">
+                        <Box position="relative" display="inline-block">
+                          <img
+                            src={userFaceImage}
+                            alt="Face capturada"
+                            style={{
+                              maxWidth: "100%",
+                              maxHeight: "300px",
+                              borderRadius: 8,
+                              marginBottom: 16,
+                            }}
+                          />
+                        </Box>
+                        <Button
+                          variant="contained"
+                          onClick={startCamera}
+                          startIcon={<Refresh />}
+                          sx={{ mt: 2 }}
+                        >
+                          Tirar Outra Foto
+                        </Button>
+                      </Box>
                     ) : (
-                      <>
-                        <Box sx={{
-                          width: "100%",
-                          maxWidth: "600px",
-                          mb: 2,
-                          borderRadius: "8px",
-                          overflow: "hidden",
-                          position: 'relative',
-                        }}>
+                      <Box textAlign="center" position="relative">
+                        <Box position="relative" display="inline-block">
                           <Webcam
-                            audio={false}
                             ref={webcamRef}
+                            audio={false}
                             screenshotFormat="image/jpeg"
-                            width="100%"
-                            height="auto"
-                            videoConstraints={{ 
+                            width={640}
+                            height={480}
+                            videoConstraints={{
                               facingMode: "user",
-                              width: { ideal: 1280 },
-                              height: { ideal: 720 }
+                              width: 640,
+                              height: 480,
                             }}
                             style={{
-                              display: userFaceImage ? "none" : "block",
-                              width: "100%",
-                              height: "auto"
+                              display: "block",
+                              borderRadius: 8,
+                              margin: "0 auto",
+                              transform: "scaleX(-1)",
+                              maxWidth: "100%",
                             }}
-                            mirrored={true}
                           />
                           <canvas
                             ref={canvasRef}
                             style={{
-                              position: 'absolute',
+                              position: "absolute",
                               top: 0,
                               left: 0,
-                              width: '100%',
-                              height: '100%',
-                              pointerEvents: 'none'
+                              width: "100%",
+                              height: "100%",
+                              pointerEvents: "none",
+                              transform: "scaleX(-1)",
                             }}
                           />
-                          {userFaceImage && (
-                            <img
-                              src={userFaceImage}
-                              alt="Face capturada"
-                              style={{
-                                width: "100%",
-                                height: "auto",
-                                borderRadius: "8px",
-                              }}
-                            />
-                          )}
                         </Box>
 
-                        <Box sx={{ display: "flex", gap: 2 }}>
-                          {!userFaceImage ? (
-                            <Button
-                              variant="contained"
-                              color="primary"
-                              onClick={captureFace}
-                              startIcon={<CameraAlt />}
-                              disabled={!isFaceDetected}
-                            >
-                              {isFaceDetected ? "Capturar Foto" : "Nenhum rosto detectado"}
-                            </Button>
+                        <Box mt={3}>
+                          {faceDetection ? (
+                            <Box>
+                              <Typography variant="body1" color="text.secondary">
+                                Confiança da detecção:{" "}
+                                {Math.round(detectionScore * 100)}%
+                              </Typography>
+
+                              <Button
+                                variant="contained"
+                                onClick={captureFace}
+                                startIcon={<CameraAlt />}
+                                sx={{ mt: 2, py: 1.5, width: "100%", maxWidth: 300 }}
+                                disabled={isLoading}
+                              >
+                                Capturar Foto
+                                {isLoading && (
+                                  <CircularProgress size={24} sx={{ ml: 1 }} />
+                                )}
+                              </Button>
+                            </Box>
                           ) : (
-                            <Button
-                              variant="contained"
-                              color="primary"
-                              onClick={startCamera}
-                              startIcon={<Refresh />}
-                            >
-                              Tirar Outra Foto
-                            </Button>
+                            <Box>
+                              <Typography variant="body1" color="error" mt={1}>
+                                Posicione seu rosto dentro do quadro
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary" mt={1}>
+                                Certifique-se de que seu rosto está bem iluminado e
+                                visível
+                              </Typography>
+                            </Box>
                           )}
                         </Box>
-                      </>
+                      </Box>
                     )}
                   </Box>
 
@@ -416,10 +485,10 @@ const CreateUser = ({ onUserAdded }) => {
                     {userFaceImage
                       ? "Foto capturada com sucesso!"
                       : isCameraActive
-                        ? isFaceDetected
-                          ? "Rosto detectado! Clique em Capturar Foto"
-                          : "Posicione seu rosto na câmera"
-                        : "Clique para iniciar a câmera"}
+                      ? isFaceDetected
+                        ? "Rosto detectado! Clique em Capturar Foto"
+                        : "Posicione seu rosto na câmera"
+                      : "Clique para iniciar a câmera"}
                   </Typography>
                 </CardContent>
               </Card>
@@ -431,11 +500,11 @@ const CreateUser = ({ onUserAdded }) => {
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert
-          onClose={handleCloseSnackbar}
+          onClose={() => setSnackbarOpen(false)}
           severity={snackbarSeverity}
           sx={{ width: "100%" }}
         >

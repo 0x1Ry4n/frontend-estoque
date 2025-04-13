@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from "react";
 import {
   Box,
   TextField,
@@ -13,114 +13,148 @@ import {
   InputLabel,
   Snackbar,
   Alert,
-} from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { Email, Lock, Visibility, VisibilityOff, Face, CameraAlt, Refresh } from '@mui/icons-material';
-import { useAuth } from '../../../context/AuthContext';
-import LoginIcon from '@mui/icons-material/Login';
-import Webcam from 'react-webcam';
-import * as faceapi from 'face-api.js';
-import api from '../../../api';
+  CircularProgress,
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import {
+  Email,
+  Lock,
+  Visibility,
+  VisibilityOff,
+  Face,
+  CameraAlt,
+  ArrowBack,
+} from "@mui/icons-material";
+import LoginIcon from "@mui/icons-material/Login";
+import { useAuth } from "../../../context/AuthContext";
+import Webcam from "react-webcam";
+import api from "../../../api";
+import * as faceapi from "face-api.js";
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [userType, setUserType] = useState('user');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [userType, setUserType] = useState("user");
+  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isVerifyingFace, setIsVerifyingFace] = useState(false);
   const [faceImage, setFaceImage] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarMessage, setSnackbarMessage] = useState("");
   const [modelsLoaded, setModelsLoaded] = useState(false);
-  const [isFaceDetected, setIsFaceDetected] = useState(false);
-
+  const [isLoading, setIsLoading] = useState(false);
+  const [faceDetection, setFaceDetection] = useState(null);
+  const [detectionScore, setDetectionScore] = useState(0);
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
-  const detectionInterval = useRef(null);
 
-  const isMobile = useMediaQuery('(max-width:600px)');
+  const isMobile = useMediaQuery("(max-width:600px)");
 
-  // Carrega os modelos de face treinados da lib faceapi
   useEffect(() => {
     const loadModels = async () => {
       try {
-        await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
-        await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
-        setModelsLoaded(true);
-        console.log('Modelos carregados com sucesso!');
-      } catch (error) {
-        console.error('Erro ao carregar modelos:', error);
-      }
-    };
-    loadModels();
+        setIsLoading(true);
+        const MODEL_URL = "/models";
 
-    return () => {
-      if (detectionInterval.current) {
-        clearInterval(detectionInterval.current);
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+          faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
+        ]);
+
+        setModelsLoaded(true);
+      } catch (error) {
+        console.error("Erro ao carregar modelos:", error);
+        setSnackbarMessage("Erro ao carregar modelos de reconhecimento facial");
+        setSnackbarOpen(true);
+      } finally {
+        setIsLoading(false);
       }
     };
+
+    loadModels();
   }, []);
 
-  // detecta a face exibida na webcam, desenhando os pontos dela em tempo real
-  const detectFace = async () => {
-    if (!webcamRef.current || !canvasRef.current || !modelsLoaded) return;
+  useEffect(() => {
+    if (!isVerifyingFace || !modelsLoaded || faceImage || !webcamRef.current)
+      return;
 
     const video = webcamRef.current.video;
-    const canvas = canvasRef.current;
-    
-    if (video.readyState !== 4) return;
-    
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    const detections = await faceapi.detectAllFaces(
-      video, 
-      new faceapi.TinyFaceDetectorOptions()
-    ).withFaceLandmarks();
-    
-    const context = canvas.getContext('2d');
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    
-    if (detections.length > 0) {
-      setIsFaceDetected(true);
-      faceapi.draw.drawDetections(canvas, detections);
-      faceapi.draw.drawFaceLandmarks(canvas, detections);
-    } else {
-      setIsFaceDetected(false);
-    }
-  };
+    let animationFrameId;
 
-  // verificação sobre intervalo
-  const startFaceVerification = () => {
-    setIsVerifyingFace(true);
-    setFaceImage(null);
-    
-    setTimeout(() => {
-      if (detectionInterval.current) {
-        clearInterval(detectionInterval.current);
+    const detectFaces = async () => {
+      if (video && video.readyState === 4) {
+        const detections = await faceapi
+          .detectAllFaces(
+            video,
+            new faceapi.TinyFaceDetectorOptions({
+              inputSize: isMobile ? 224 : 512,
+              scoreThreshold: 0.5,
+            })
+          )
+          .withFaceLandmarks()
+          .withFaceDescriptors();
+
+        if (detections.length > 0) {
+          const canvas = canvasRef.current;
+          const displaySize = { width: video.width, height: video.height };
+          faceapi.matchDimensions(canvas, displaySize);
+
+          const ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          const resizedDetections = faceapi.resizeResults(
+            detections,
+            displaySize
+          );
+
+          faceapi.draw.drawDetections(canvas, resizedDetections, {
+            lineWidth: 10,
+            boxColor: "#00FF00",
+            drawLabelOptions: {
+              fontSize: 18,
+              fontStyle: "bold",
+              fontColor: "#FFFFFF",
+              backgroundColor: "#00AA00",
+              padding: 5,
+              anchorPosition: "TOP_LEFT",
+            },
+          });
+
+          faceapi.draw.drawFaceLandmarks(canvas, resizedDetections, {
+            lineWidth: 5,
+            drawLines: true,
+            color: "#FF0000",
+          });
+
+          setDetectionScore(detections[0].detection.score.toFixed(2));
+          setFaceDetection(detections[0]);
+        } else {
+          const canvas = canvasRef.current;
+          const ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          setFaceDetection(null);
+          setDetectionScore(0);
+        }
       }
-      detectionInterval.current = setInterval(detectFace, 300);
-    }, 500);
-  };
+      animationFrameId = requestAnimationFrame(detectFaces);
+    };
 
-  const stopFaceVerification = () => {
-    if (detectionInterval.current) {
-      clearInterval(detectionInterval.current);
-      detectionInterval.current = null;
-    }
-    setIsVerifyingFace(false);
-  };
+    detectFaces();
 
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [isVerifyingFace, modelsLoaded, faceImage, isMobile]);
 
-  // realiza o login se estiver tudo conforme
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    if (userType === 'user' && !faceImage) {
+    if (userType === "user" && !faceImage) {
       setSnackbarMessage("Por favor, verifique o rosto antes de continuar.");
       setSnackbarOpen(true);
       return;
@@ -129,76 +163,135 @@ const Login = () => {
     try {
       const isAuthenticated = await login(email, password);
       if (isAuthenticated) {
-        navigate('/home');
+        navigate("/home");
       } else {
-        setError('Credenciais inválidas. Verifique seu e-mail e senha.');
+        setError("Credenciais inválidas. Verifique seu e-mail e senha.");
       }
     } catch (err) {
-      setError('Erro ao tentar entrar. Tente novamente mais tarde.');
+      setError("Erro ao tentar entrar. Tente novamente mais tarde.");
     }
   };
 
-  // limpa o canvas com os pontos marcados da face anterior e inicia uma nova captura
-  const captureFace = () => {
-    if (webcamRef.current && isFaceDetected) {
-      const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      
+  const captureFace = async () => {
+    if (webcamRef.current && faceDetection) {
       const imageSrc = webcamRef.current.getScreenshot();
       setFaceImage(imageSrc);
-      
-      if (detectionInterval.current) {
-        clearInterval(detectionInterval.current);
-        detectionInterval.current = null;
-      }
+
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    } else {
+      setSnackbarMessage("Nenhum rosto detectado. Posicione-se melhor.");
+      setSnackbarOpen(true);
     }
   };
 
-  // verifica se a face capturada coincide com a face do usuário registrado no sistema.
   const verifyFace = async () => {
     try {
-      const response = await api.post('/auth/verify-face', {
+      if (!faceImage) {
+        setSnackbarMessage("Nenhuma imagem facial capturada.");
+        setSnackbarOpen(true);
+        return;
+      }
+
+      setIsLoading(true);
+
+      const img = await faceapi.fetchImage(faceImage);
+      const detections = await faceapi
+        .detectAllFaces(img, new faceapi.TinyFaceDetectorOptions())
+        .withFaceLandmarks()
+        .withFaceDescriptors();
+
+      if (detections.length === 0) {
+        setSnackbarMessage("Nenhum rosto detectado na imagem capturada.");
+        setSnackbarOpen(true);
+        setIsLoading(false);
+        return;
+      }
+
+      const response = await api.post("/auth/verify-face", {
         email,
         image: faceImage,
       });
-  
+
       if (response.status === 200) {
         if (response.data.error) {
-          setSnackbarMessage(`Erro: ${response.data.details}`);
+          setSnackbarMessage(`Erro: ${response.data.error}`);
           setSnackbarOpen(true);
-          setFaceImage(null); 
-          setIsVerifyingFace(false);
+          setFaceImage(null);
+          setIsLoading(false);
           return;
         }
 
         if (!response.data.verified) {
           setSnackbarMessage(`Rosto incompatível com o cadastro de usuário!`);
           setSnackbarOpen(true);
-          setFaceImage(null); 
+          setFaceImage(null);
+          setIsLoading(false);
           return;
         }
-  
+
         setSnackbarMessage("Rosto verificado com sucesso!");
         setSnackbarOpen(true);
+        setIsLoading(false);
       } else {
         setSnackbarMessage("Falha na verificação do rosto.");
         setSnackbarOpen(true);
-        setFaceImage(null); 
+        setFaceImage(null);
+        setIsLoading(false);
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.error || "Erro ao verificar rosto.";
+      const errorMessage =
+        error.response?.data?.error || "Erro ao verificar rosto.";
       setSnackbarMessage(errorMessage);
       setSnackbarOpen(true);
-      setFaceImage(null); 
+      setFaceImage(null);
+      setIsLoading(false);
     }
   };
 
   return (
-    <Box display="flex" justifyContent="center" alignItems="center" height="100vh" bgcolor="#e0f2f1" px={2}>
-      <Box bgcolor="#fff" p={isMobile ? 4 : 12} borderRadius={4} boxShadow={4} width={isMobile ? '90%' : '500px'}>
-        <Typography variant="h5" mb={3} textAlign="center" color="#00796b" fontWeight="bold">
-          <LoginIcon sx={{ mr: 1 }} /> Acesse sua conta
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      minHeight="100vh"
+      bgcolor="#e0f2f1"
+      px={2}
+      py={4}
+    >
+      <Box
+        bgcolor="#fff"
+        p={isMobile ? 3 : 4}
+        borderRadius={4}
+        boxShadow={4}
+        padding={8}
+        width={isMobile ? "95%" : "700px"}
+      >
+        {isVerifyingFace && (
+          <Button
+            startIcon={<ArrowBack />}
+            onClick={() => setIsVerifyingFace(false)}
+            sx={{ mb: 2 }}
+          >
+            Voltar
+          </Button>
+        )}
+
+        <Typography
+          variant="h5"
+          mb={3}
+          textAlign="center"
+          color="#00796b"
+          fontWeight="bold"
+        >
+          {isVerifyingFace ? (
+            "Verificação Facial"
+          ) : (
+            <>
+              <LoginIcon sx={{ mr: 1 }} /> Acesse sua conta
+            </>
+          )}
         </Typography>
 
         {error && (
@@ -208,7 +301,7 @@ const Login = () => {
         )}
 
         {!isVerifyingFace ? (
-          <form onSubmit={handleLogin}>
+          <form onSubmit={handleLogin} style={{ margin: 'auto', width: '85%' }}>
             <FormControl fullWidth margin="normal">
               <InputLabel id="user-type-label">Tipo de Login</InputLabel>
               <Select
@@ -233,7 +326,7 @@ const Login = () => {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Email sx={{ color: '#00796b' }} />
+                    <Email sx={{ color: "#00796b" }} />
                   </InputAdornment>
                 ),
               }}
@@ -241,7 +334,7 @@ const Login = () => {
 
             <TextField
               label="Senha"
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               fullWidth
               variant="outlined"
               margin="normal"
@@ -250,12 +343,15 @@ const Login = () => {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Lock sx={{ color: '#00796b' }} />
+                    <Lock sx={{ color: "#00796b" }} />
                   </InputAdornment>
                 ),
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                    <IconButton
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
@@ -263,22 +359,24 @@ const Login = () => {
               }}
             />
 
-            {userType === 'user' && (
-              <Button
-                variant={faceImage ? "contained" : "outlined"}
-                color={faceImage ? "success" : "secondary"}
-                fullWidth
-                sx={{ mt: 2, py: 1.2 }}
-                onClick={startFaceVerification}
-                startIcon={<Face />}
-                disabled={!modelsLoaded}
-              >
-                {faceImage 
-                  ? "Rosto capturado" 
-                  : modelsLoaded 
-                    ? "Iniciar Reconhecimento Facial" 
-                    : "Carregando modelos..."}
-              </Button>
+            {userType === "user" && (
+              <Box mt={2} textAlign="center">
+               
+                <Button
+                  variant={faceImage ? "contained" : "outlined"}
+                  color={faceImage ? "success" : "secondary"}
+                  fullWidth
+                  sx={{ py: 1.5 }}
+                  onClick={() => setIsVerifyingFace(true)}
+                  startIcon={<Face />}
+                  disabled={!modelsLoaded || isLoading}
+                >
+                  {faceImage
+                    ? "Rosto capturado"
+                    : "Iniciar Reconhecimento Facial"}
+                  {isLoading && <CircularProgress size={24} sx={{ ml: 1 }} />}
+                </Button>
+              </Box>
             )}
 
             <Button
@@ -286,112 +384,132 @@ const Login = () => {
               variant="contained"
               color="primary"
               fullWidth
-              sx={{ mt: 2, bgcolor: '#00796b', '&:hover': { bgcolor: '#004d40' }, py: 1.5 }}
-              disabled={userType === 'user' && !faceImage}
+              sx={{
+                mt: 3,
+                bgcolor: "#00796b",
+                "&:hover": { bgcolor: "#004d40" },
+                py: 1.5,
+              }}
+              disabled={(userType === "user" && !faceImage) || isLoading}
             >
               Entrar
+              {isLoading && <CircularProgress size={24} sx={{ ml: 1 }} />}
             </Button>
           </form>
         ) : (
           <Box>
-            <Typography variant="h6" fontWeight="bolder" textAlign="center" mb={2}>
-              Verificação Facial
-            </Typography>
-
             {faceImage ? (
               <Box textAlign="center">
-                <img
-                  src={faceImage}
-                  alt="Face capturada"
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '400px',
-                    borderRadius: 8,
-                    marginBottom: 16,
-                  }}
-                />
-                <Box display="flex" justifyContent="center" gap={2}>
-                  <Button 
-                    variant="contained" 
-                    onClick={verifyFace} 
-                    startIcon={<Face />} 
+                <Box position="relative" display="inline-block">
+                  <img
+                    src={faceImage}
+                    alt="Face capturada"
+                    style={{
+                      width: '85%',
+                      borderRadius: 8,
+                      marginBottom: 4,
+                    }}
+                  />
+                </Box>
+                <Box
+                  display="flex"
+                  justifyContent="center"
+                  gap={2}
+                  flexWrap="wrap"
+                >
+                  <Button
+                    variant="contained"
+                    onClick={verifyFace}
+                    startIcon={<Face />}
                     color="success"
+                    disabled={isLoading}
+                    sx={{ flexGrow: 1, maxWidth: 200 }}
                   >
                     Verificar
+                    {isLoading && <CircularProgress size={24} sx={{ ml: 1 }} />}
                   </Button>
-                  <Button 
-                    variant="outlined" 
-                    onClick={startFaceVerification}
-                    startIcon={<Refresh />}
+                  <Button
+                    variant="outlined"
+                    onClick={() => setFaceImage(null)}
+                    startIcon={<CameraAlt />}
+                    disabled={isLoading}
+                    sx={{ flexGrow: 1, maxWidth: 200 }}
                   >
-                    Tentar Novamente
+                    Capturar Novamente
                   </Button>
                 </Box>
               </Box>
             ) : (
-              <Box textAlign="center">
-                <Box sx={{
-                  position: 'relative',
-                  width: '100%',
-                  maxHeight: '400px',
-                  borderRadius: 2,
-                  overflow: 'hidden',
-                  mb: 2
-                }}>
+              <Box textAlign="center" position="relative">
+                <Box position="relative" display="inline-block">
                   <Webcam
                     ref={webcamRef}
                     audio={false}
                     screenshotFormat="image/jpeg"
-                    width="100%"
-                    height="auto"
-                    videoConstraints={{ 
-                      facingMode: 'user',
-                      width: { ideal: 1280 },
-                      height: { ideal: 720 }
+                    width={isMobile ? 320 : 640}
+                    height={isMobile ? 240 : 480}
+                    videoConstraints={{
+                      facingMode: "user",
+                      width: isMobile ? 320 : 640,
+                      height: isMobile ? 240 : 480,
                     }}
-                    style={{ 
-                      width: '100%',
-                      height: 'auto',
-                      display: 'block'
+                    style={{
+                      display: "block",
+                      borderRadius: 8,
+                      margin: "0 auto",
+                      transform: "scaleX(-1)",
+                      maxWidth: "100%",
                     }}
                   />
                   <canvas
                     ref={canvasRef}
                     style={{
-                      position: 'absolute',
+                      position: "absolute",
                       top: 0,
                       left: 0,
-                      width: '100%',
-                      height: '100%',
-                      pointerEvents: 'none'
+                      width: "100%",
+                      height: "100%",
+                      pointerEvents: "none",
+                      transform: "scaleX(-1)",
                     }}
                   />
                 </Box>
-                <Button 
-                  variant="contained" 
-                  onClick={captureFace} 
-                  startIcon={<CameraAlt />} 
-                  sx={{ py: 1.2 }}
-                  disabled={!isFaceDetected}
-                >
-                  {isFaceDetected ? "Capturar Foto" : "Nenhum rosto detectado"}
-                </Button>
+
+                <Box mt={3}>
+                  {faceDetection ? (
+                    <Box>
+                      <Typography variant="body1" color="text.secondary">
+                        Confiança da detecção:{" "}
+                        {Math.round(detectionScore * 100)}%
+                      </Typography>
+
+                      <Button
+                        variant="contained"
+                        onClick={captureFace}
+                        startIcon={<CameraAlt />}
+                        sx={{ mt: 2, py: 1.5, width: "100%", maxWidth: 300 }}
+                        disabled={isLoading}
+                      >
+                        Capturar Foto
+                        {isLoading && (
+                          <CircularProgress size={24} sx={{ ml: 1 }} />
+                        )}
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Box>
+                      <Typography variant="body1" color="error" mt={1}>
+                        Posicione seu rosto dentro do quadro
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" mt={1}>
+                        Certifique-se de que seu rosto está bem iluminado e
+                        visível
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
               </Box>
             )}
-
-            <Button 
-              fullWidth 
-              sx={{ mt: 2 }} 
-              onClick={stopFaceVerification}
-            >
-              Voltar para Login
-            </Button>
-
-            <Typography variant="body2" sx={{ mt: 2, textAlign: 'center', color: 'text.secondary' }}>
-              {isFaceDetected 
-                ? "Rosto detectado! Posicione-se corretamente e clique em Capturar Foto"
-                : "Posicione seu rosto na câmera"}
-            </Typography>
           </Box>
         )}
 
@@ -399,10 +517,18 @@ const Login = () => {
           open={snackbarOpen}
           autoHideDuration={6000}
           onClose={() => setSnackbarOpen(false)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
         >
           <Alert
             onClose={() => setSnackbarOpen(false)}
-            severity={snackbarMessage.includes('sucesso') ? 'success' : 'error'}
+            severity={
+              snackbarMessage.includes("sucesso")
+                ? "success"
+                : snackbarMessage.includes("Erro")
+                ? "error"
+                : "warning"
+            }
+            sx={{ width: "100%" }}
           >
             {snackbarMessage}
           </Alert>
