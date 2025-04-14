@@ -19,6 +19,7 @@ import {
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import { DataGrid } from "@mui/x-data-grid";
+import { addDays, format } from "date-fns";
 import api from "../../../../api";
 import Swal from "sweetalert2";
 
@@ -141,6 +142,37 @@ const ReceivementList = () => {
     }
   };
 
+  const handleStatusChange = async (id) => {
+    const { value: status } = await Swal.fire({
+      title: 'Alterar Status',
+      input: 'select',
+      inputOptions: receivementStatusMap,
+      inputPlaceholder: 'Selecione um status',
+      showCancelButton: true,
+      confirmButtonText: "Editar",
+      cancelButtonText: "Cancelar",
+      inputValidator: (value) => {
+        if (!value) {
+          return 'Você precisa selecionar um status!';
+        }
+      }
+    });
+
+    if (status) {
+      try {
+        await api.patch(`/receivements/${id}/status`, { status: status });
+        setSnackbarMessage('Status atualizado com sucesso!');
+        setSnackbarSeverity('success');
+        fetchReceivements();
+      } catch (error) {
+        setSnackbarMessage('Erro ao atualizar o status.');
+        setSnackbarSeverity('error');
+      } finally {
+        setSnackbarOpen(true);
+      }
+    }
+  };
+
   const handleRefresh = () => {
     fetchReceivements();
     setSnackbarMessage("Lista de recebimentos atualizada!");
@@ -172,14 +204,31 @@ const ReceivementList = () => {
       headerName: "Data de Entrada",
       width: 150,
       type: "date",
-      valueGetter: (params) => new Date(params.value),
+      valueGetter: (params) => {
+        const value = params.value;
+        const date = value ? new Date(value) : null;
+        return date && !isNaN(date) ? date : null;
+      },
+      valueFormatter: (params) => {
+        const date = addDays(params.value, 1);
+        return date && !isNaN(date) ? format(date, "dd/MM/yyyy") : "";
+      },
     },
     {
       field: "actions",
       headerName: "Ações",
-      width: 150,
+      width: 200,
       renderCell: (cellData) => (
         <>
+          <Button
+            onClick={() => handleStatusChange(cellData.row.id)}
+            variant="outlined"
+            size="small"
+            color="primary"
+            sx={{ mr: 1 }}
+          >
+            Status
+          </Button>
           <Button onClick={() => handleClickOpen(cellData.row)}>
             <EditIcon />
           </Button>
@@ -238,9 +287,10 @@ const ReceivementList = () => {
                 name: e.target.value,
               })
             }
+            sx={{ mb: 3 }}
           />
 
-          <Select
+          {/* <Select
             labelId="status-label"
             value={selectedReceivement?.status || ""}
             onChange={(e) =>
@@ -250,8 +300,8 @@ const ReceivementList = () => {
               })
             }
             fullWidth
-            displayEmpty 
-            notched 
+            displayEmpty
+            notched
           >
             <MenuItem value="" disabled>
               Selecione um status
@@ -261,7 +311,7 @@ const ReceivementList = () => {
                 {value}
               </MenuItem>
             ))}
-          </Select>
+          </Select> */}
 
           <TextField
             label="Quantidade"
@@ -322,13 +372,21 @@ const ReceivementList = () => {
             variant="outlined"
             fullWidth
             margin="normal"
-            value={selectedReceivement?.receivingDate || ""}
+            value={
+              selectedReceivement?.receivingDate
+                ? new Date(selectedReceivement.receivingDate).toISOString().split('T')[0]
+                : ""
+            }
             onChange={(e) =>
               setSelectedReceivement({
                 ...selectedReceivement,
                 receivingDate: e.target.value,
               })
             }
+            InputLabelProps={{
+              shrink: true
+            }}
+            sx={{ mb: 3 }}
           />
         </DialogContent>
         <DialogActions>

@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { Delete as DeleteIcon, Edit as EditIcon, Refresh as RefreshIcon, Visibility, VisibilityOff } from '@mui/icons-material';
 import { DataGrid } from "@mui/x-data-grid";
+import Swal from "sweetalert2";
 import api from '../../../../api';
 
 const UserList = () => {
@@ -22,23 +23,28 @@ const UserList = () => {
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
   const [isEditing, setIsEditing] = useState(false);
   const [username, setUsername] = useState("");
-  const [email, setEmail] = useState(""); 
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); 
+  // const [showPassword, setShowPassword] = useState(false);
+
+  const userStatusMap = {
+    ACTIVE: "Ativo",
+    INACTIVE: "Inativo"
+  }
 
   useEffect(() => {
-    fetchUsers(); 
+    fetchUsers();
   }, []);
 
   const fetchUsers = async () => {
     try {
-      const response = await api.get('/auth/users'); 
+      const response = await api.get('/auth/users');
       const formattedUsers = response.data.map(user => ({
         ...user,
         role: user.role === "ADMIN" ? "Administrador" : "Usuário Comum",
         status: user.status === "ACTIVE" ? "Ativo" : "Inativo"
       }));
-  
+
       setRows(formattedUsers);
     } catch (error) {
       console.error("Erro ao buscar usuários: ", error);
@@ -50,9 +56,9 @@ const UserList = () => {
 
   const handleClickOpen = (user) => {
     setSelectedUser(user);
-    setUsername(user.username); 
-    setEmail(user.email); 
-    setPassword(user.password); 
+    setUsername(user.username);
+    setEmail(user.email);
+    setPassword(user.password);
     setOpen(true);
     setIsEditing(true);
   };
@@ -62,24 +68,24 @@ const UserList = () => {
     setSelectedUser(null);
     setIsEditing(false);
     setUsername("");
-    setEmail(""); 
+    setEmail("");
     setPassword("");
-    setShowPassword(false); 
+    setShowPassword(false);
   };
 
 
   const handleSave = async () => {
     const updatedUserData = {
       username,
-      email, 
+      email,
       password,
     };
 
     try {
-      await api.put(`/auth/users/${selectedUser.id}`, updatedUserData); 
-      setRows(rows.map(row => 
+      await api.put(`/auth/users/${selectedUser.id}`, updatedUserData);
+      setRows(rows.map(row =>
         row.id === selectedUser.id ? { ...row, username, email } : row
-      )); 
+      ));
       setSnackbarMessage("Usuário atualizado com sucesso!");
       setSnackbarSeverity("success");
     } catch (error) {
@@ -92,8 +98,75 @@ const UserList = () => {
     }
   };
 
+  const handleStatusChange = async (id) => {
+    const { value: status } = await Swal.fire({
+      title: 'Alterar Status',
+      input: 'select',
+      inputOptions: userStatusMap,
+      inputPlaceholder: 'Selecione um status',
+      showCancelButton: true,
+      confirmButtonText: "Editar",
+      cancelButtonText: "Cancelar",
+      inputValidator: (value) => {
+        if (!value) {
+          return 'Você precisa selecionar um status!';
+        }
+      }
+    });
+
+    if (status) {
+      try {
+        await api.patch(`/auth/users/${id}/status`, { status: status });
+        setSnackbarMessage('Status atualizado com sucesso!');
+        setSnackbarSeverity('success');
+        fetchUsers();
+      } catch (error) {
+        setSnackbarMessage(`Erro ao atualizar o status: ${error.response?.data?.message}`);
+        setSnackbarSeverity('error');
+      } finally {
+        setSnackbarOpen(true);
+      }
+    }
+  };
+
+  const handlePasswordChange = async (id) => {
+    const { value: password } = await Swal.fire({
+      title: 'Alterar Senha',
+      input: 'password',
+      inputLabel: 'Nova senha',
+      inputPlaceholder: 'Digite a nova senha',
+      inputAttributes: {
+        autocapitalize: 'off',
+        autocorrect: 'off'
+      },
+      showCancelButton: true,
+      confirmButtonText: 'Salvar',
+      cancelButtonText: 'Cancelar',
+      inputValidator: (value) => {
+        if (!value) {
+          return 'Você precisa digitar uma senha!';
+        }
+      }
+    });
+  
+    if (password) {
+      try {
+        await api.patch(`/auth/users/${id}/password`, { password });
+  
+        setSnackbarMessage('Senha alterada com sucesso!');
+        setSnackbarSeverity('success');
+        fetchUsers();
+      } catch (error) {
+        setSnackbarMessage(`Erro ao alterar a senha: ${error.response?.data?.message || error.message}`);
+        setSnackbarSeverity('error');
+      } finally {
+        setSnackbarOpen(true);
+      }
+    }
+  };
+  
   const handleRefresh = () => {
-    fetchUsers(); 
+    fetchUsers();
     setSnackbarMessage("Lista de usuários atualizada!");
     setSnackbarSeverity("info");
     setSnackbarOpen(true);
@@ -103,15 +176,33 @@ const UserList = () => {
     { field: "id", headerName: "ID", width: 90 },
     { field: "username", headerName: "Nome de Usuário", width: 150 },
     { field: "email", headerName: "Email", width: 200 },
-    { field: "password", headerName: "Password", width: 200, hide: true }, 
+    { field: "password", headerName: "Password", width: 200, hide: true },
     { field: "role", headerName: "Cargo", width: 150 },
     { field: "status", headerName: "Status", width: 100 },
     {
       field: "actions",
       headerName: "Ações",
-      width: 150,
+      width: 200,
       renderCell: (cellData) => (
         <>
+          <Button
+            onClick={() => handleStatusChange(cellData.row.id)}
+            variant="outlined"
+            size="small"
+            color="primary"
+            sx={{ mr: 1 }}
+          >
+            Status
+          </Button>
+          <Button
+            onClick={() => handlePasswordChange(cellData.row.id)}
+            variant="outlined"
+            size="small"
+            color="primary"
+            sx={{ mr: 1 }}
+          >
+            Senha
+          </Button>
           <Button onClick={() => handleClickOpen(cellData.row)}>
             <EditIcon />
           </Button>
@@ -122,10 +213,10 @@ const UserList = () => {
 
   return (
     <div style={{ padding: '20px', backgroundColor: '#f5f5f5', borderRadius: '8px', width: '95%' }}>
-      <Button 
-        variant="outlined" 
-        startIcon={<RefreshIcon />} 
-        onClick={handleRefresh} 
+      <Button
+        variant="outlined"
+        startIcon={<RefreshIcon />}
+        onClick={handleRefresh}
         sx={{ mb: 2 }}
       >
         Atualizar Lista
@@ -159,11 +250,11 @@ const UserList = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          
-          <TextField
+
+          {/* <TextField
             margin="dense"
             label="Senha"
-            type={showPassword ? "text" : "password"} 
+            type={showPassword ? "text" : "password"}
             fullWidth
             variant="outlined"
             value={password}
@@ -173,7 +264,7 @@ const UserList = () => {
                 <Button onClick={() => setShowPassword(!showPassword)}>{showPassword ? <VisibilityOff /> : <Visibility />}</Button>
               )
             }}
-          />
+          /> */}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancelar</Button>

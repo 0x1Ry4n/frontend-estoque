@@ -20,6 +20,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import api from "../../../../api";
 import Swal from "sweetalert2";
 import { Controller, useForm } from "react-hook-form";
+import { addDays, format } from 'date-fns';
 
 const Products = () => {
   const {
@@ -111,8 +112,7 @@ const Products = () => {
       } catch (error) {
         console.log(error);
         setSnackbarMessage(
-          `Erro ao deletar o produto: ${
-            error.response?.data?.error || error.message
+          `Erro ao deletar o produto: ${error.response?.data?.error || error.message
           }`
         );
         setSnackbarSeverity("error");
@@ -146,10 +146,9 @@ const Products = () => {
       setSnackbarSeverity("success");
     } catch (error) {
       setSnackbarMessage(
-        `Erro ao salvar o produto: ${
-          error.response?.data?.error || error.message
+        `Erro ao salvar o produto: ${error.response?.data?.error || error.message
         }`
-      );      
+      );
       setSnackbarSeverity("error");
     } finally {
       handleClose();
@@ -225,7 +224,15 @@ const Products = () => {
       headerName: "Data de Expiração",
       width: 150,
       type: "date",
-      valueGetter: (params) => new Date(params.value),
+      valueGetter: (params) => {
+        const value = params.value;
+        const date = value ? new Date(value) : null;
+        return date && !isNaN(date) ? date : null;
+      },
+      valueFormatter: (params) => {
+        const date = addDays(params.value, 1);
+        return date && !isNaN(date) ? format(date, "dd/MM/yyyy") : "";
+      },
       editable: true,
     },
     {
@@ -344,6 +351,7 @@ const Products = () => {
                 )}
               />
             )}
+            sx={{ mb: 3 }}
           />
           <TextField
             label="Descrição"
@@ -356,6 +364,7 @@ const Products = () => {
                 description: e.target.value,
               })
             }
+            sx={{ mb: 3 }}
           />
           <TextField
             label="Preço Unitário"
@@ -369,15 +378,14 @@ const Products = () => {
                 unitPrice: parseFloat(e.target.value),
               })
             }
+            sx={{ mb: 3 }}
           />
           <TextField
             label="Data de Expiração"
+            type="date"
+            variant="outlined"
             fullWidth
             margin="normal"
-            type="date"
-            InputLabelProps={{
-              shrink: true,
-            }}
             value={
               selectedProduct?.expirationDate
                 ? selectedProduct.expirationDate.split("T")[0]
@@ -389,7 +397,10 @@ const Products = () => {
                 expirationDate: e.target.value,
               })
             }
-            InputProps={{ readOnly: true }}
+            InputLabelProps={{
+              shrink: true
+            }}
+            sx={{ mb: 3 }}
           />
         </DialogContent>
         <DialogActions>
